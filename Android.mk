@@ -35,6 +35,7 @@ LOCAL_SRC_FILES := \
 
 LOCAL_CFLAGS += \
     -Wno-unused-parameter \
+    -Wno-missing-field-initializers \
 
 LOCAL_SHARED_LIBRARIES := \
     libbase \

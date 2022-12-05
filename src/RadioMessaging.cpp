@@ -32,48 +32,57 @@ constexpr auto ok = &ScopedAStatus::ok;
 ScopedAStatus RadioMessaging::acknowledgeIncomingGsmSmsWithPdu(  //
         int32_t serial, bool success, const std::string& ackPdu) {
     LOG_UNIMPLEMENTED << serial << ' ' << success << ' ' << ackPdu;
+    mResponse->acknowledgeIncomingGsmSmsWithPduResponse(notSupported(serial));
     return ok();
 }
 
 ScopedAStatus RadioMessaging::acknowledgeLastIncomingCdmaSms(  //
         int32_t serial, const aidl::CdmaSmsAck& smsAck) {
     LOG_UNIMPLEMENTED << serial;
+    mResponse->acknowledgeLastIncomingCdmaSmsResponse(notSupported(serial));
     return ok();
 }
 
 ScopedAStatus RadioMessaging::acknowledgeLastIncomingGsmSms(  //
         int32_t serial, bool success, aidl::SmsAcknowledgeFailCause cause) {
     LOG_UNIMPLEMENTED << serial << ' ' << success;
+    mResponse->acknowledgeLastIncomingGsmSmsResponse(notSupported(serial));
     return ok();
 }
 
 ScopedAStatus RadioMessaging::deleteSmsOnRuim(int32_t serial, int32_t index) {
     LOG_UNIMPLEMENTED << serial << ' ' << index;
+    mResponse->deleteSmsOnRuimResponse(notSupported(serial));
     return ok();
 }
 
 ScopedAStatus RadioMessaging::deleteSmsOnSim(int32_t serial, int32_t index) {
     LOG_UNIMPLEMENTED << serial << ' ' << index;
+    mResponse->deleteSmsOnSimResponse(notSupported(serial));
     return ok();
 }
 
 ScopedAStatus RadioMessaging::getCdmaBroadcastConfig(int32_t serial) {
     LOG_UNIMPLEMENTED << serial;
+    mResponse->getCdmaBroadcastConfigResponse(notSupported(serial), {});
     return ok();
 }
 
 ScopedAStatus RadioMessaging::getGsmBroadcastConfig(int32_t serial) {
     LOG_UNIMPLEMENTED << serial;
+    mResponse->getGsmBroadcastConfigResponse(notSupported(serial), {});
     return ok();
 }
 
 ScopedAStatus RadioMessaging::getSmscAddress(int32_t serial) {
     LOG_UNIMPLEMENTED << serial;
+    mResponse->getSmscAddressResponse(notSupported(serial), {});
     return ok();
 }
 
 ScopedAStatus RadioMessaging::reportSmsMemoryStatus(int32_t serial, bool available) {
     LOG_UNIMPLEMENTED << serial << ' ' << available;
+    mResponse->reportSmsMemoryStatusResponse(notSupported(serial));
     return ok();
 }
 
@@ -84,48 +93,57 @@ ScopedAStatus RadioMessaging::responseAcknowledgement() {
 
 ScopedAStatus RadioMessaging::sendCdmaSms(int32_t serial, const aidl::CdmaSmsMessage& sms) {
     LOG_UNIMPLEMENTED << serial;
+    mResponse->sendCdmaSmsResponse(notSupported(serial), {});
     return ok();
 }
 
 ScopedAStatus RadioMessaging::sendCdmaSmsExpectMore(int32_t serial, const aidl::CdmaSmsMessage& m) {
     LOG_UNIMPLEMENTED << serial;
+    mResponse->sendCdmaSmsExpectMoreResponse(notSupported(serial), {});
     return ok();
 }
 
 ScopedAStatus RadioMessaging::sendImsSms(int32_t serial, const aidl::ImsSmsMessage& message) {
     LOG_UNIMPLEMENTED << serial;
+    mResponse->sendImsSmsResponse(notSupported(serial), {});
     return ok();
 }
 
 ScopedAStatus RadioMessaging::sendSms(int32_t serial, const aidl::GsmSmsMessage& message) {
-    LOG_UNIMPLEMENTED << serial;
+    LOG_STUB << serial << ": " << message.toString();
+    mResponse->sendSmsResponse(notSupported(serial), {});
     return ok();
 }
 
 ScopedAStatus RadioMessaging::sendSmsExpectMore(int32_t serial, const aidl::GsmSmsMessage& msg) {
     LOG_UNIMPLEMENTED << serial;
+    mResponse->sendSmsExpectMoreResponse(notSupported(serial), {});
     return ok();
 }
 
 ScopedAStatus RadioMessaging::setCdmaBroadcastActivation(int32_t serial, bool activate) {
-    LOG_UNIMPLEMENTED << serial << ' ' << activate;
+    LOG_STUB << serial << ' ' << activate;
+    mResponse->setCdmaBroadcastActivationResponse(okay(serial));
     return ok();
 }
 
 ScopedAStatus RadioMessaging::setCdmaBroadcastConfig(
         int32_t serial, const std::vector<aidl::CdmaBroadcastSmsConfigInfo>& cfgInfo) {
-    LOG_UNIMPLEMENTED << serial;
+    LOG_STUB << serial;
+    mResponse->setCdmaBroadcastConfigResponse(okay(serial));
     return ok();
 }
 
 ScopedAStatus RadioMessaging::setGsmBroadcastActivation(int32_t serial, bool activate) {
-    LOG_UNIMPLEMENTED << serial << ' ' << activate;
+    LOG_STUB << serial << ' ' << activate;
+    mResponse->setGsmBroadcastActivationResponse(okay(serial));
     return ok();
 }
 
 ScopedAStatus RadioMessaging::setGsmBroadcastConfig(
         int32_t serial, const std::vector<aidl::GsmBroadcastSmsConfigInfo>& configInfo) {
-    LOG_UNIMPLEMENTED << serial;
+    LOG_STUB << serial;
+    mResponse->setGsmBroadcastConfigResponse(notSupported(serial));
     return ok();
 }
 
@@ -142,16 +160,19 @@ ScopedAStatus RadioMessaging::setResponseFunctions(
 
 ScopedAStatus RadioMessaging::setSmscAddress(int32_t serial, const std::string& smsc) {
     LOG_UNIMPLEMENTED << serial << ' ' << smsc;
+    mResponse->setSmscAddressResponse(notSupported(serial));
     return ok();
 }
 
 ScopedAStatus RadioMessaging::writeSmsToRuim(int32_t serial, const aidl::CdmaSmsWriteArgs& sms) {
     LOG_UNIMPLEMENTED << serial;
+    mResponse->writeSmsToRuimResponse(notSupported(serial), {});
     return ok();
 }
 
 ScopedAStatus RadioMessaging::writeSmsToSim(int32_t serial, const aidl::SmsWriteArgs& smsWrArgs) {
     LOG_UNIMPLEMENTED << serial;
+    mResponse->writeSmsToSimResponse(notSupported(serial), {});
     return ok();
 }
 

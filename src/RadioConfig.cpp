@@ -19,12 +19,15 @@
 
 #include "RadioConfig.h"
 
+#include <aidl/android/hardware/radio/sim/BnRadioSim.h>
+
 #include "debug.h"
 
 #define RADIO_MODULE "Config"
 
 namespace android::hardware::radio::mm {
 
+using ::aidl::android::hardware::radio::sim::CardStatus;
 using ::ndk::ScopedAStatus;
 namespace aidl = ::aidl::android::hardware::radio::config;
 constexpr auto ok = &ScopedAStatus::ok;
@@ -32,32 +35,62 @@ constexpr auto ok = &ScopedAStatus::ok;
 RadioConfig::RadioConfig() {}
 
 ScopedAStatus RadioConfig::getHalDeviceCapabilities(int32_t serial) {
-    LOG_UNIMPLEMENTED << serial;
+    LOG_STUB << serial;
+    mResponse->getHalDeviceCapabilitiesResponse(okay(serial), true);
     return ok();
 }
 
 ScopedAStatus RadioConfig::getNumOfLiveModems(int32_t serial) {
     LOG_UNIMPLEMENTED << serial;
+    mResponse->getNumOfLiveModemsResponse(notSupported(serial), {});
     return ok();
 }
 
 ScopedAStatus RadioConfig::getPhoneCapability(int32_t serial) {
-    LOG_UNIMPLEMENTED << serial;
+    LOG_STUB << serial;
+    auto cap = (aidl::PhoneCapability){
+            .maxActiveData = 1,
+            .maxActiveInternetData = 1,
+            .isInternetLingeringSupported = false,
+            .logicalModemIds = std::vector<uint8_t>(0),
+    };
+
+    mResponse->getPhoneCapabilityResponse(okay(serial), cap);
+
     return ok();
 }
 
 ScopedAStatus RadioConfig::getSimSlotsStatus(int32_t serial) {
-    LOG_UNIMPLEMENTED << serial;
+    LOG_STUB << serial;
+    auto slots = std::vector<aidl::SimSlotStatus>();
+    auto slotStatus = (aidl::SimSlotStatus){
+            .cardState = CardStatus::STATE_PRESENT,
+            .atr = {},
+            .eid = {},
+    };
+
+    slotStatus.portInfo.emplace_back((aidl::SimPortInfo){
+            .iccId = "8938003992840681512F",
+            .logicalSlotId = 0,
+            .portActive = true,
+    });
+
+    slots.emplace_back(slotStatus);
+    mResponse->getSimSlotsStatusResponse(okay(serial), slots);
     return ok();
 }
 
 ScopedAStatus RadioConfig::setNumOfLiveModems(int32_t serial, int8_t numOfLiveModems) {
     LOG_UNIMPLEMENTED << serial;
+    mResponse->setNumOfLiveModemsResponse(notSupported(serial));
     return ok();
 }
 
 ScopedAStatus RadioConfig::setPreferredDataModem(int32_t serial, int8_t modemId) {
-    LOG_UNIMPLEMENTED << serial;
+    LOG_STUB << serial << " modemId: " << (int)modemId;
+    auto resp = okay(serial);
+    if (modemId < 0) resp.error = RadioError::INVALID_ARGUMENTS;
+    mResponse->setPreferredDataModemResponse(resp);
     return ok();
 }
 
@@ -78,6 +111,7 @@ ScopedAStatus RadioConfig::setResponseFunctions(
 ScopedAStatus RadioConfig::setSimSlotsMapping(  //
         int32_t serial, const std::vector<aidl::SlotPortMapping>& slotMap) {
     LOG_UNIMPLEMENTED << serial;
+    mResponse->setSimSlotsMappingResponse(okay(serial));
     return ok();
 }
 

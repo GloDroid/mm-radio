@@ -22,6 +22,12 @@
 
 namespace android::hardware::radio::mm {
 
+using aidl::android::hardware::radio::network::UsageSetting;
+
+struct RadioNetworkState {
+    UsageSetting usageSetting{};
+};
+
 class RadioNetwork : public aidl::android::hardware::radio::network::BnRadioNetwork {
     ::ndk::ScopedAStatus getAllowedNetworkTypesBitmap(int32_t serial) override;
     ::ndk::ScopedAStatus getAvailableBandModes(int32_t serial) override;
@@ -94,6 +100,7 @@ class RadioNetwork : public aidl::android::hardware::radio::network::BnRadioNetw
     std::shared_ptr<::aidl::android::hardware::radio::network::IRadioNetworkIndication> mIndication;
 
   public:
+    RadioNetworkState state;
 };
 
 }  // namespace android::hardware::radio::mm

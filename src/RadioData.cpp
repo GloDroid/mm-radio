@@ -32,32 +32,38 @@ constexpr auto ok = &ScopedAStatus::ok;
 
 ScopedAStatus RadioData::allocatePduSessionId(int32_t serial) {
     LOG_UNIMPLEMENTED << serial;
+    mResponse->allocatePduSessionIdResponse(notSupported(serial), {});
     return ok();
 }
 
 ScopedAStatus RadioData::cancelHandover(int32_t serial, int32_t callId) {
     LOG_UNIMPLEMENTED << serial;
+    mResponse->cancelHandoverResponse(notSupported(serial));
     return ok();
 }
 
 ScopedAStatus RadioData::deactivateDataCall(int32_t serial, int32_t cid,
                                             aidl::DataRequestReason reason) {
     LOG_UNIMPLEMENTED << serial;
+    mResponse->deactivateDataCallResponse(notSupported(serial));
     return ok();
 }
 
 ScopedAStatus RadioData::getDataCallList(int32_t serial) {
     LOG_UNIMPLEMENTED << serial;
+    mResponse->getDataCallListResponse(notSupported(serial), {});
     return ok();
 }
 
 ScopedAStatus RadioData::getSlicingConfig(int32_t serial) {
     LOG_UNIMPLEMENTED << serial;
+    mResponse->getSlicingConfigResponse(notSupported(serial), {});
     return ok();
 }
 
 ScopedAStatus RadioData::releasePduSessionId(int32_t serial, int32_t id) {
     LOG_UNIMPLEMENTED << serial;
+    mResponse->releasePduSessionIdResponse(notSupported(serial));
     return ok();
 }
 
@@ -68,24 +74,28 @@ ScopedAStatus RadioData::responseAcknowledgement() {
 
 ScopedAStatus RadioData::setDataAllowed(int32_t serial, bool allow) {
     LOG_UNIMPLEMENTED << serial;
+    mResponse->setDataAllowedResponse(notSupported(serial));
     return ok();
 }
 
 ScopedAStatus RadioData::setDataProfile(int32_t serial,
                                         const std::vector<aidl::DataProfileInfo>& profiles) {
-    LOG_UNIMPLEMENTED << serial;
+    LOG_STUB << serial;
+    mResponse->setDataProfileResponse(okay(serial));
     return ok();
 }
 
 ScopedAStatus RadioData::setDataThrottling(int32_t serial, aidl::DataThrottlingAction dta,
                                            int64_t completionDurationMs) {
     LOG_UNIMPLEMENTED << serial;
+    mResponse->setDataThrottlingResponse(notSupported(serial));
     return ok();
 }
 
 ScopedAStatus RadioData::setInitialAttachApn(int32_t serial,
                                              const std::optional<aidl::DataProfileInfo>& info) {
-    LOG_UNIMPLEMENTED << serial;
+    LOG_STUB << serial;
+    mResponse->setInitialAttachApnResponse(okay(serial));
     return ok();
 }
 
@@ -97,6 +107,8 @@ ScopedAStatus RadioData::setResponseFunctions(
     mResponse = response;
     mIndication = indication;
 
+    mIndication->dataCallListChanged({}, {});
+
     return ok();
 }
 
@@ -107,22 +119,26 @@ ScopedAStatus RadioData::setupDataCall(int32_t serial, aidlCommon::AccessNetwork
                                        const std::vector<std::string>& dnses, int32_t pduSessId,
                                        const std::optional<aidl::SliceInfo>& sliceInfo,
                                        bool matchAllRuleAllowed) {
-    LOG_UNIMPLEMENTED;
+    LOG_STUB;
+    mResponse->setupDataCallResponse(notSupported(serial), {});
     return ok();
 }
 
 ScopedAStatus RadioData::startHandover(int32_t serial, int32_t callId) {
     LOG_UNIMPLEMENTED << serial;
+    mResponse->startHandoverResponse(notSupported(serial));
     return ok();
 }
 
 ScopedAStatus RadioData::startKeepalive(int32_t serial, const aidl::KeepaliveRequest& keepalive) {
     LOG_UNIMPLEMENTED << serial;
+    mResponse->startKeepaliveResponse(notSupported(serial), {});
     return ok();
 }
 
 ScopedAStatus RadioData::stopKeepalive(int32_t serial, int32_t sessionHandle) {
     LOG_UNIMPLEMENTED << serial;
+    mResponse->stopKeepaliveResponse(notSupported(serial));
     return ok();
 }
 

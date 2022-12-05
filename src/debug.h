@@ -30,7 +30,28 @@ static constexpr bool kSuperVerbose = true;
     if constexpr (debug::kSuperVerbose) LOG(VERBOSE) << (RADIO_MODULE ".") << __func__ << ' '
 
 #define LOG_UNIMPLEMENTED LOG(WARNING) << (RADIO_MODULE ".") << __func__ << " not implemented "
+#define LOG_STUB LOG(WARNING) << (RADIO_MODULE ".") << __func__ << " stub "
 
 }  // namespace debug
+
+using RadioResponseType = aidl::android::hardware::radio::RadioResponseType;
+using RadioResponseInfo = aidl::android::hardware::radio::RadioResponseInfo;
+using RadioError = aidl::android::hardware::radio::RadioError;
+
+static inline RadioResponseInfo notSupported(int32_t serial) {
+    return {
+            .type = RadioResponseType::SOLICITED,
+            .serial = serial,
+            .error = RadioError::REQUEST_NOT_SUPPORTED,
+    };
+}
+
+static inline RadioResponseInfo okay(int32_t serial) {
+    return {
+            .type = RadioResponseType::SOLICITED,
+            .serial = serial,
+            .error = RadioError::NONE,
+    };
+}
 
 }  // namespace android::hardware::radio::mm
