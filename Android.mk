@@ -11,6 +11,7 @@
 # limitations under the License.
 #
 
+ifeq ($(filter true, $(BOARD_BUILD_AOSPEXT_MMRADIO)),)
 
 LOCAL_PATH := $(call my-dir)
 
@@ -52,3 +53,5 @@ LOCAL_SHARED_LIBRARIES := \
     android.hardware.radio.voice-V1-ndk \
 
 include $(BUILD_EXECUTABLE)
+
+endif
