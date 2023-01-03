@@ -1,0 +1,17 @@
+on: [push]
+
+jobs:
+  hello_world_job:
+    runs-on: ubuntu-latest
+    name: CI for mm-radio
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Run CI
+        id: hello
+        uses: ./.github/workflows/
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: artifacts
+          path: ./install
