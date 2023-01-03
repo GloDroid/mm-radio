@@ -18,6 +18,8 @@
  */
 #pragma once
 
+#include <aidl/android/hardware/radio/RadioResponseInfo.h>
+#include <aidl/android/hardware/radio/RadioResponseType.h>
 #include <android-base/logging.h>
 
 namespace android::hardware::radio::mm {
