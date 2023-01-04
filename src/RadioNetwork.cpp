@@ -19,8 +19,9 @@
 
 #include "RadioNetwork.h"
 
-#include <unistd.h>
 #include <thread>
+
+#include <unistd.h>
 
 #include "debug.h"
 
@@ -121,8 +122,8 @@ ScopedAStatus RadioNetwork::getDataRegistrationState(int32_t serial) {
     auto result = (aidl::RegStateResult){
             .regState = aidl::RegState::REG_HOME,
             .rat = RadioTechnology::LTE,
-            .registeredPlmn = "25501",
             .cellIdentity = getFakeCellIdentityLte(),
+            .registeredPlmn = "25501",
             .accessTechnologySpecificInfo = (aidl::EutranRegistrationInfo){},
     };
     mResponse->getDataRegistrationStateResponse(okay(serial), result);
@@ -224,8 +225,8 @@ ScopedAStatus RadioNetwork::getVoiceRegistrationState(int32_t serial) {
     auto result = (aidl::RegStateResult){
             .regState = aidl::RegState::REG_HOME,
             .rat = RadioTechnology::LTE,
-            .registeredPlmn = "25501",
             .cellIdentity = getFakeCellIdentityLte(),
+            .registeredPlmn = "25501",
             .accessTechnologySpecificInfo =
                     (aidl::EutranRegistrationInfo){
                             .lteVopsInfo =
@@ -250,53 +251,55 @@ ScopedAStatus RadioNetwork::responseAcknowledgement() {
     return ok();
 }
 
-ScopedAStatus RadioNetwork::setAllowedNetworkTypesBitmap(int32_t serial, int32_t ntype) {
+ScopedAStatus RadioNetwork::setAllowedNetworkTypesBitmap(int32_t serial, int32_t /*ntype*/) {
     LOG_STUB << serial;
     mResponse->setAllowedNetworkTypesBitmapResponse(notSupported(serial));
     return ok();
 }
 
-ScopedAStatus RadioNetwork::setBandMode(int32_t serial, aidl::RadioBandMode mode) {
+ScopedAStatus RadioNetwork::setBandMode(int32_t serial, aidl::RadioBandMode /*mode*/) {
     LOG_UNIMPLEMENTED << serial;
     mResponse->setBandModeResponse(notSupported(serial));
     return ok();
 }
 
-ScopedAStatus RadioNetwork::setBarringPassword(int32_t serial, const std::string& facility,
-                                               const std::string& oldPw, const std::string& newPw) {
+ScopedAStatus RadioNetwork::setBarringPassword(int32_t serial, const std::string& /*facility*/,
+                                               const std::string& /*oldPw*/,
+                                               const std::string& /*newPw*/) {
     LOG_UNIMPLEMENTED << serial;
     mResponse->setBarringPasswordResponse(notSupported(serial));
     return ok();
 }
 
-ScopedAStatus RadioNetwork::setCdmaRoamingPreference(int32_t serial, aidl::CdmaRoamingType type) {
+ScopedAStatus RadioNetwork::setCdmaRoamingPreference(int32_t serial,
+                                                     aidl::CdmaRoamingType /*type*/) {
     LOG_UNIMPLEMENTED << serial;
     mResponse->setCdmaRoamingPreferenceResponse(notSupported(serial));
     return ok();
 }
 
-ScopedAStatus RadioNetwork::setCellInfoListRate(int32_t serial, int32_t rate) {
+ScopedAStatus RadioNetwork::setCellInfoListRate(int32_t serial, int32_t /*rate*/) {
     LOG_UNIMPLEMENTED << serial;
     mResponse->setCellInfoListRateResponse(notSupported(serial));
     return ok();
 }
 
-ScopedAStatus RadioNetwork::setIndicationFilter(int32_t serial, int32_t indFilter) {
+ScopedAStatus RadioNetwork::setIndicationFilter(int32_t serial, int32_t /*indFilter*/) {
     LOG_STUB << serial;
     mResponse->setIndicationFilterResponse(okay(serial));
     return ok();
 }
 
 ScopedAStatus RadioNetwork::setLinkCapacityReportingCriteria(  //
-        int32_t serial, int32_t hysteresisMs, int32_t hysteresisDlKbps, int32_t hysteresisUlKbps,
-        const std::vector<int32_t>& thrDownlinkKbps, const std::vector<int32_t>& thrUplinkKbps,
-        AccessNetwork accessNetwork) {
+        int32_t serial, int32_t /*hysteresisMs*/, int32_t /*hysteresisDlKbps*/,
+        int32_t /*hysteresisUlKbps*/, const std::vector<int32_t>& /*thrDownlinkKbps*/,
+        const std::vector<int32_t>& /*thrUplinkKbps*/, AccessNetwork /*accessNetwork*/) {
     LOG_STUB << serial;
     mResponse->setLinkCapacityReportingCriteriaResponse(notSupported(serial));
     return ok();
 }
 
-ScopedAStatus RadioNetwork::setLocationUpdates(int32_t serial, bool enable) {
+ScopedAStatus RadioNetwork::setLocationUpdates(int32_t serial, bool /*enable*/) {
     LOG_UNIMPLEMENTED << serial;
     mResponse->setLocationUpdatesResponse(notSupported(serial));
     return ok();
@@ -309,14 +312,14 @@ ScopedAStatus RadioNetwork::setNetworkSelectionModeAutomatic(int32_t serial) {
 }
 
 ScopedAStatus RadioNetwork::setNetworkSelectionModeManual(  //
-        int32_t serial, const std::string& opNumeric, AccessNetwork ran) {
+        int32_t serial, const std::string& /*opNumeric*/, AccessNetwork /*ran*/) {
     LOG_UNIMPLEMENTED << serial;
     mResponse->setNetworkSelectionModeManualResponse(notSupported(serial));
     return ok();
 }
 
 ScopedAStatus RadioNetwork::setNrDualConnectivityState(int32_t serial,
-                                                       aidl::NrDualConnectivityState st) {
+                                                       aidl::NrDualConnectivityState /*st*/) {
     LOG_UNIMPLEMENTED << serial;
     mResponse->setNrDualConnectivityStateResponse(notSupported(serial));
     return ok();
@@ -339,25 +342,27 @@ ScopedAStatus RadioNetwork::setSignalStrengthReportingCriteria(
         int32_t serial, const std::vector<aidl::SignalThresholdInfo>& infos) {
     LOG_STUB << serial;
     auto resp = okay(serial);
-    if (infos.size() == 0) resp.error = RadioError::INVALID_ARGUMENTS;
+    if (infos.empty()) resp.error = RadioError::INVALID_ARGUMENTS;
     mResponse->setSignalStrengthReportingCriteriaResponse(resp);
     return ok();
 }
 
-ScopedAStatus RadioNetwork::setSuppServiceNotifications(int32_t serial, bool enable) {
+ScopedAStatus RadioNetwork::setSuppServiceNotifications(int32_t serial, bool /*enable*/) {
     LOG_UNIMPLEMENTED << serial;
     mResponse->setSuppServiceNotificationsResponse(notSupported(serial));
     return ok();
 }
 
 ScopedAStatus RadioNetwork::setSystemSelectionChannels(  //
-        int32_t serial, bool specifyCh, const std::vector<aidl::RadioAccessSpecifier>& specifiers) {
+        int32_t serial, bool /*specifyCh*/,
+        const std::vector<aidl::RadioAccessSpecifier>& /*specifiers*/) {
     LOG_UNIMPLEMENTED << serial;
     mResponse->setSystemSelectionChannelsResponse(notSupported(serial));
     return ok();
 }
 
-ScopedAStatus RadioNetwork::startNetworkScan(int32_t serial, const aidl::NetworkScanRequest& req) {
+ScopedAStatus RadioNetwork::startNetworkScan(int32_t serial,
+                                             const aidl::NetworkScanRequest& /*req*/) {
     LOG_UNIMPLEMENTED << serial;
     auto resp = okay(serial);
     resp.error = RadioError::REQUEST_NOT_SUPPORTED;
@@ -372,7 +377,7 @@ ScopedAStatus RadioNetwork::stopNetworkScan(int32_t serial) {
 }
 
 ScopedAStatus RadioNetwork::supplyNetworkDepersonalization(int32_t serial,
-                                                           const std::string& nPin) {
+                                                           const std::string& /*nPin*/) {
     LOG_UNIMPLEMENTED << serial;
     mResponse->supplyNetworkDepersonalizationResponse(notSupported(serial), {});
     return ok();

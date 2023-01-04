@@ -37,14 +37,14 @@ ScopedAStatus RadioMessaging::acknowledgeIncomingGsmSmsWithPdu(  //
 }
 
 ScopedAStatus RadioMessaging::acknowledgeLastIncomingCdmaSms(  //
-        int32_t serial, const aidl::CdmaSmsAck& smsAck) {
+        int32_t serial, const aidl::CdmaSmsAck& /*smsAck*/) {
     LOG_UNIMPLEMENTED << serial;
     mResponse->acknowledgeLastIncomingCdmaSmsResponse(notSupported(serial));
     return ok();
 }
 
 ScopedAStatus RadioMessaging::acknowledgeLastIncomingGsmSms(  //
-        int32_t serial, bool success, aidl::SmsAcknowledgeFailCause cause) {
+        int32_t serial, bool success, aidl::SmsAcknowledgeFailCause /*cause*/) {
     LOG_UNIMPLEMENTED << serial << ' ' << success;
     mResponse->acknowledgeLastIncomingGsmSmsResponse(notSupported(serial));
     return ok();
@@ -91,19 +91,20 @@ ScopedAStatus RadioMessaging::responseAcknowledgement() {
     return ok();
 }
 
-ScopedAStatus RadioMessaging::sendCdmaSms(int32_t serial, const aidl::CdmaSmsMessage& sms) {
+ScopedAStatus RadioMessaging::sendCdmaSms(int32_t serial, const aidl::CdmaSmsMessage& /*sms*/) {
     LOG_UNIMPLEMENTED << serial;
     mResponse->sendCdmaSmsResponse(notSupported(serial), {});
     return ok();
 }
 
-ScopedAStatus RadioMessaging::sendCdmaSmsExpectMore(int32_t serial, const aidl::CdmaSmsMessage& m) {
+ScopedAStatus RadioMessaging::sendCdmaSmsExpectMore(int32_t serial,
+                                                    const aidl::CdmaSmsMessage& /*m*/) {
     LOG_UNIMPLEMENTED << serial;
     mResponse->sendCdmaSmsExpectMoreResponse(notSupported(serial), {});
     return ok();
 }
 
-ScopedAStatus RadioMessaging::sendImsSms(int32_t serial, const aidl::ImsSmsMessage& message) {
+ScopedAStatus RadioMessaging::sendImsSms(int32_t serial, const aidl::ImsSmsMessage& /*message*/) {
     LOG_UNIMPLEMENTED << serial;
     mResponse->sendImsSmsResponse(notSupported(serial), {});
     return ok();
@@ -115,7 +116,8 @@ ScopedAStatus RadioMessaging::sendSms(int32_t serial, const aidl::GsmSmsMessage&
     return ok();
 }
 
-ScopedAStatus RadioMessaging::sendSmsExpectMore(int32_t serial, const aidl::GsmSmsMessage& msg) {
+ScopedAStatus RadioMessaging::sendSmsExpectMore(int32_t serial,
+                                                const aidl::GsmSmsMessage& /*msg*/) {
     LOG_UNIMPLEMENTED << serial;
     mResponse->sendSmsExpectMoreResponse(notSupported(serial), {});
     return ok();
@@ -128,7 +130,7 @@ ScopedAStatus RadioMessaging::setCdmaBroadcastActivation(int32_t serial, bool ac
 }
 
 ScopedAStatus RadioMessaging::setCdmaBroadcastConfig(
-        int32_t serial, const std::vector<aidl::CdmaBroadcastSmsConfigInfo>& cfgInfo) {
+        int32_t serial, const std::vector<aidl::CdmaBroadcastSmsConfigInfo>& /*cfgInfo*/) {
     LOG_STUB << serial;
     mResponse->setCdmaBroadcastConfigResponse(okay(serial));
     return ok();
@@ -141,7 +143,7 @@ ScopedAStatus RadioMessaging::setGsmBroadcastActivation(int32_t serial, bool act
 }
 
 ScopedAStatus RadioMessaging::setGsmBroadcastConfig(
-        int32_t serial, const std::vector<aidl::GsmBroadcastSmsConfigInfo>& configInfo) {
+        int32_t serial, const std::vector<aidl::GsmBroadcastSmsConfigInfo>& /*configInfo*/) {
     LOG_STUB << serial;
     mResponse->setGsmBroadcastConfigResponse(notSupported(serial));
     return ok();
@@ -164,13 +166,15 @@ ScopedAStatus RadioMessaging::setSmscAddress(int32_t serial, const std::string& 
     return ok();
 }
 
-ScopedAStatus RadioMessaging::writeSmsToRuim(int32_t serial, const aidl::CdmaSmsWriteArgs& sms) {
+ScopedAStatus RadioMessaging::writeSmsToRuim(int32_t serial,
+                                             const aidl::CdmaSmsWriteArgs& /*sms*/) {
     LOG_UNIMPLEMENTED << serial;
     mResponse->writeSmsToRuimResponse(notSupported(serial), {});
     return ok();
 }
 
-ScopedAStatus RadioMessaging::writeSmsToSim(int32_t serial, const aidl::SmsWriteArgs& smsWrArgs) {
+ScopedAStatus RadioMessaging::writeSmsToSim(int32_t serial,
+                                            const aidl::SmsWriteArgs& /*smsWrArgs*/) {
     LOG_UNIMPLEMENTED << serial;
     mResponse->writeSmsToSimResponse(notSupported(serial), {});
     return ok();

@@ -32,8 +32,6 @@ using ::ndk::ScopedAStatus;
 namespace aidl = ::aidl::android::hardware::radio::config;
 constexpr auto ok = &ScopedAStatus::ok;
 
-RadioConfig::RadioConfig() {}
-
 ScopedAStatus RadioConfig::getHalDeviceCapabilities(int32_t serial) {
     LOG_STUB << serial;
     mResponse->getHalDeviceCapabilitiesResponse(okay(serial), true);
@@ -80,7 +78,7 @@ ScopedAStatus RadioConfig::getSimSlotsStatus(int32_t serial) {
     return ok();
 }
 
-ScopedAStatus RadioConfig::setNumOfLiveModems(int32_t serial, int8_t numOfLiveModems) {
+ScopedAStatus RadioConfig::setNumOfLiveModems(int32_t serial, int8_t /*numOfLiveModems*/) {
     LOG_UNIMPLEMENTED << serial;
     mResponse->setNumOfLiveModemsResponse(notSupported(serial));
     return ok();
@@ -109,7 +107,7 @@ ScopedAStatus RadioConfig::setResponseFunctions(
 }
 
 ScopedAStatus RadioConfig::setSimSlotsMapping(  //
-        int32_t serial, const std::vector<aidl::SlotPortMapping>& slotMap) {
+        int32_t serial, const std::vector<aidl::SlotPortMapping>& /*slotMap*/) {
     LOG_UNIMPLEMENTED << serial;
     mResponse->setSimSlotsMappingResponse(okay(serial));
     return ok();

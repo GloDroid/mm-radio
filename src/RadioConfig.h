@@ -43,7 +43,7 @@ class RadioConfig : public aidl::android::hardware::radio::config::BnRadioConfig
     std::shared_ptr<aidl::android::hardware::radio::config::IRadioConfigIndication> mIndication;
 
   public:
-    RadioConfig();
+    RadioConfig() = default;
 };
 
 }  // namespace android::hardware::radio::mm

@@ -8,7 +8,7 @@ CLANG_TIDY := clang-tidy-15
 OUT_DIR := /tmp/mm-radio/build
 SRC_DIR := .
 
-# CXXFLAGS := -Wall -Wextra -Werror
+CXXFLAGS := -Wall -Wextra -Werror -Wno-missing-field-initializers
 CXXFLAGS += -D_LIBCPP_ENABLE_THREAD_SAFETY_ANNOTATIONS
 CXXFLAGS += -fvisibility-inlines-hidden -std=gnu++17 -DHWC2_USE_CPP11 -DHWC2_INCLUDE_STRINGIFICATION -fno-rtti
 
@@ -19,6 +19,10 @@ CXXARGS := $(patsubst -mcpu=%,,$(CXXARGS))
 # TODO: build aospless with gtest enabled and remove line below
 CXXARGS := $(subst -nostdlibinc,,$(CXXARGS))
 CXXARGS += -I. -I./tests/test_include $(CXXFLAGS)
+
+TIDY_FILES_OVERRIDE := \
+    src/RadioNetwork.cpp:COARSE \
+    src/RadioSim.cpp:COARSE \
 
 TIDY_CHECKS_FINE := *                                   \
     -llvmlibc* -fuchsia-* -altera-*                     \
@@ -47,17 +51,8 @@ TIDY_CHECKS_NORMAL :=                                   \
 
 TIDY_CHECKS_COARSE := \
     $(TIDY_CHECKS_NORMAL) \
-    -cppcoreguidelines-non-private-member-variables-in-classes \
-    -cppcoreguidelines-pro-bounds-pointer-arithmetic \
-    -cppcoreguidelines-pro-type-cstyle-cast \
-    -cppcoreguidelines-pro-type-reinterpret-cast \
-    -cppcoreguidelines-pro-type-static-cast-downcast \
-    -cppcoreguidelines-pro-type-union-access \
-    -cppcoreguidelines-macro-usage \
-    -readability-convert-member-functions-to-static \
-    -readability-implicit-bool-conversion \
-    -readability-identifier-naming \
     -readability-magic-numbers \
+    -cert-err58-cpp \
 
 .PHONY: all build tidy clean
 

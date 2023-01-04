@@ -39,21 +39,23 @@ ScopedAStatus RadioSim::areUiccApplicationsEnabled(int32_t serial) {
     return ok();
 }
 
-ScopedAStatus RadioSim::changeIccPin2ForApp(int32_t serial, const std::string& oldPin2,
-                                            const std::string& newPin2, const std::string& aid) {
+ScopedAStatus RadioSim::changeIccPin2ForApp(int32_t serial, const std::string& /*oldPin2*/,
+                                            const std::string& /*newPin2*/,
+                                            const std::string& /*aid*/) {
     LOG_UNIMPLEMENTED << serial;
     mResponse->changeIccPin2ForAppResponse(notSupported(serial), {});
     return ok();
 }
 
-ScopedAStatus RadioSim::changeIccPinForApp(int32_t serial, const std::string& oldPin,
-                                           const std::string& newPin, const std::string& aid) {
+ScopedAStatus RadioSim::changeIccPinForApp(int32_t serial, const std::string& /*oldPin*/,
+                                           const std::string& /*newPin*/,
+                                           const std::string& /*aid*/) {
     LOG_UNIMPLEMENTED << serial;
     mResponse->changeIccPinForAppResponse(notSupported(serial), {});
     return ok();
 }
 
-ScopedAStatus RadioSim::enableUiccApplications(int32_t serial, bool enable) {
+ScopedAStatus RadioSim::enableUiccApplications(int32_t serial, bool /*enable*/) {
     LOG_UNIMPLEMENTED << serial;
     mResponse->enableUiccApplicationsResponse(okay(serial));
     return ok();
@@ -79,8 +81,8 @@ ScopedAStatus RadioSim::getCdmaSubscriptionSource(int32_t serial) {
 }
 
 ScopedAStatus RadioSim::getFacilityLockForApp(  //
-        int32_t serial, const std::string& facility, const std::string& password,
-        int32_t serviceClass, const std::string& appId) {
+        int32_t serial, const std::string& /*facility*/, const std::string& /*password*/,
+        int32_t /*serviceClass*/, const std::string& /*appId*/) {
     LOG_STUB << serial;
     mResponse->getFacilityLockForAppResponse(okay(serial), 0);
     return ok();
@@ -142,6 +144,7 @@ ScopedAStatus RadioSim::iccCloseLogicalChannel(int32_t serial, int32_t channelId
     return ok();
 }
 
+// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables)
 std::map<aidl::IccIo, aidl::IccIoResult> fakeIccProfile = {
         // EF_DIR
         {{0xc0, 0x2f00, "3F00", 0x0, 0x0, 0x0f},
@@ -224,21 +227,23 @@ ScopedAStatus RadioSim::iccIoForApp(int32_t serial, const aidl::IccIo& iccIo) {
     return ok();
 }
 
-ScopedAStatus RadioSim::iccOpenLogicalChannel(int32_t serial, const std::string& aid, int32_t p2) {
+ScopedAStatus RadioSim::iccOpenLogicalChannel(int32_t serial, const std::string& /*aid*/,
+                                              int32_t /*p2*/) {
     LOG_STUB << serial;
     static int channel = 1;
     mResponse->iccOpenLogicalChannelResponse(okay(serial), channel++, {});
     return ok();
 }
 
-ScopedAStatus RadioSim::iccTransmitApduBasicChannel(int32_t serial, const aidl::SimApdu& message) {
+ScopedAStatus RadioSim::iccTransmitApduBasicChannel(int32_t serial,
+                                                    const aidl::SimApdu& /*message*/) {
     LOG_UNIMPLEMENTED << serial;
     mResponse->iccTransmitApduBasicChannelResponse(notSupported(serial), {});
     return ok();
 }
 
 ScopedAStatus RadioSim::iccTransmitApduLogicalChannel(int32_t serial,
-                                                      const aidl::SimApdu& message) {
+                                                      const aidl::SimApdu& /*message*/) {
     LOG_STUB << serial;
     mResponse->iccTransmitApduLogicalChannelResponse(okay(serial), aidl::IccIoResult());
     return ok();
@@ -251,7 +256,8 @@ ScopedAStatus RadioSim::reportStkServiceIsRunning(int32_t serial) {
 }
 
 ScopedAStatus RadioSim::requestIccSimAuthentication(  //
-        int32_t serial, int32_t authContext, const std::string& authData, const std::string& aid) {
+        int32_t serial, int32_t /*authContext*/, const std::string& /*authData*/,
+        const std::string& /*aid*/) {
     LOG_UNIMPLEMENTED << serial;
     mResponse->requestIccSimAuthenticationResponse(notSupported(serial), {});
     return ok();
@@ -262,49 +268,50 @@ ScopedAStatus RadioSim::responseAcknowledgement() {
     return ok();
 }
 
-ScopedAStatus RadioSim::sendEnvelope(int32_t serial, const std::string& command) {
+ScopedAStatus RadioSim::sendEnvelope(int32_t serial, const std::string& /*command*/) {
     LOG_UNIMPLEMENTED << serial;
     mResponse->sendEnvelopeResponse(notSupported(serial), {});
     return ok();
 }
 
-ScopedAStatus RadioSim::sendEnvelopeWithStatus(int32_t serial, const std::string& contents) {
+ScopedAStatus RadioSim::sendEnvelopeWithStatus(int32_t serial, const std::string& /*contents*/) {
     LOG_UNIMPLEMENTED << serial;
     mResponse->sendEnvelopeWithStatusResponse(notSupported(serial), {});
     return ok();
 }
 
 ScopedAStatus RadioSim::sendTerminalResponseToSim(int32_t serial,
-                                                  const std::string& commandResponse) {
+                                                  const std::string& /*commandResponse*/) {
     LOG_UNIMPLEMENTED << serial;
     mResponse->sendTerminalResponseToSimResponse(notSupported(serial));
     return ok();
 }
 
 ScopedAStatus RadioSim::setAllowedCarriers(  //
-        int32_t serial, const aidl::CarrierRestrictions& carriers, aidl::SimLockMultiSimPolicy mp) {
+        int32_t serial, const aidl::CarrierRestrictions& /*carriers*/,
+        aidl::SimLockMultiSimPolicy /*mp*/) {
     LOG_UNIMPLEMENTED << serial;
     mResponse->setAllowedCarriersResponse(notSupported(serial));
     return ok();
 }
 
 ScopedAStatus RadioSim::setCarrierInfoForImsiEncryption(
-        int32_t serial, const aidl::ImsiEncryptionInfo& imsiEncryptionInfo) {
+        int32_t serial, const aidl::ImsiEncryptionInfo& /*imsiEncryptionInfo*/) {
     LOG_UNIMPLEMENTED << serial;
     mResponse->setCarrierInfoForImsiEncryptionResponse(notSupported(serial));
     return ok();
 }
 
 ScopedAStatus RadioSim::setCdmaSubscriptionSource(int32_t serial,
-                                                  aidl::CdmaSubscriptionSource cdmaSub) {
+                                                  aidl::CdmaSubscriptionSource /*cdmaSub*/) {
     LOG_STUB << serial;
     mResponse->setCdmaSubscriptionSourceResponse(okay(serial));
     return ok();
 }
 
 ScopedAStatus RadioSim::setFacilityLockForApp(  //
-        int32_t serial, const std::string& facility, bool lockState, const std::string& password,
-        int32_t serviceClass, const std::string& appId) {
+        int32_t serial, const std::string& /*facility*/, bool /*lockState*/,
+        const std::string& /*password*/, int32_t /*serviceClass*/, const std::string& /*appId*/) {
     LOG_UNIMPLEMENTED << serial;
     mResponse->setFacilityLockForAppResponse(notSupported(serial), {});
     return ok();
@@ -324,34 +331,36 @@ ScopedAStatus RadioSim::setResponseFunctions(
     return ok();
 }
 
-ScopedAStatus RadioSim::setSimCardPower(int32_t serial, aidl::CardPowerState powerUp) {
+ScopedAStatus RadioSim::setSimCardPower(int32_t serial, aidl::CardPowerState /*powerUp*/) {
     LOG_UNIMPLEMENTED << serial;
     mResponse->setSimCardPowerResponse(okay(serial));
     return ok();
 }
 
-ScopedAStatus RadioSim::setUiccSubscription(int32_t serial, const aidl::SelectUiccSub& uiccSub) {
+ScopedAStatus RadioSim::setUiccSubscription(int32_t serial,
+                                            const aidl::SelectUiccSub& /*uiccSub*/) {
     LOG_UNIMPLEMENTED << serial;
     mResponse->setUiccSubscriptionResponse(notSupported(serial));
     return ok();
 }
 
-ScopedAStatus RadioSim::supplyIccPin2ForApp(int32_t serial, const std::string& pin2,
-                                            const std::string& aid) {
+ScopedAStatus RadioSim::supplyIccPin2ForApp(int32_t serial, const std::string& /*pin2*/,
+                                            const std::string& /*aid*/) {
     LOG_UNIMPLEMENTED << serial;
     mResponse->supplyIccPin2ForAppResponse(notSupported(serial), {});
     return ok();
 }
 
-ScopedAStatus RadioSim::supplyIccPinForApp(int32_t serial, const std::string& pin,
-                                           const std::string& aid) {
+ScopedAStatus RadioSim::supplyIccPinForApp(int32_t serial, const std::string& /*pin*/,
+                                           const std::string& /*aid*/) {
     LOG_UNIMPLEMENTED << serial;
     mResponse->supplyIccPinForAppResponse(notSupported(serial), {});
     return ok();
 }
 
-ScopedAStatus RadioSim::supplyIccPuk2ForApp(int32_t serial, const std::string& puk2,
-                                            const std::string& pin2, const std::string& aid) {
+ScopedAStatus RadioSim::supplyIccPuk2ForApp(int32_t serial, const std::string& /*puk2*/,
+                                            const std::string& /*pin2*/,
+                                            const std::string& /*aid*/) {
     LOG_UNIMPLEMENTED << serial;
     auto resp = okay(serial);
     resp.error = RadioError::INVALID_SIM_STATE;
@@ -359,8 +368,8 @@ ScopedAStatus RadioSim::supplyIccPuk2ForApp(int32_t serial, const std::string& p
     return ok();
 }
 
-ScopedAStatus RadioSim::supplyIccPukForApp(int32_t serial, const std::string& puk,
-                                           const std::string& pin, const std::string& aid) {
+ScopedAStatus RadioSim::supplyIccPukForApp(int32_t serial, const std::string& /*puk*/,
+                                           const std::string& /*pin*/, const std::string& /*aid*/) {
     LOG_UNIMPLEMENTED << serial;
     auto resp = okay(serial);
     resp.error = RadioError::INVALID_SIM_STATE;
@@ -368,15 +377,15 @@ ScopedAStatus RadioSim::supplyIccPukForApp(int32_t serial, const std::string& pu
     return ok();
 }
 
-ScopedAStatus RadioSim::supplySimDepersonalization(int32_t serial, aidl::PersoSubstate pss,
-                                                   const std::string& controlKey) {
+ScopedAStatus RadioSim::supplySimDepersonalization(int32_t serial, aidl::PersoSubstate /*pss*/,
+                                                   const std::string& /*controlKey*/) {
     LOG_UNIMPLEMENTED << serial;
     mResponse->supplySimDepersonalizationResponse(notSupported(serial), {}, {});
     return ok();
 }
 
 ScopedAStatus RadioSim::updateSimPhonebookRecords(int32_t serial,
-                                                  const aidl::PhonebookRecordInfo& recordInfo) {
+                                                  const aidl::PhonebookRecordInfo& /*recordInfo*/) {
     LOG_UNIMPLEMENTED << serial;
     mResponse->updateSimPhonebookRecordsResponse(notSupported(serial), {});
     return ok();
