@@ -26,7 +26,8 @@ namespace android::hardware::radio::mm {
 
 namespace debug {
 
-static constexpr bool kSuperVerbose = true;
+// NOLINTNEXTLINE(clang-diagnostic-unused-const-variable)
+constexpr bool kSuperVerbose = true;
 
 #define LOG_CALL \
     if constexpr (debug::kSuperVerbose) LOG(VERBOSE) << (RADIO_MODULE ".") << __func__ << ' '
@@ -40,7 +41,7 @@ using RadioResponseType = aidl::android::hardware::radio::RadioResponseType;
 using RadioResponseInfo = aidl::android::hardware::radio::RadioResponseInfo;
 using RadioError = aidl::android::hardware::radio::RadioError;
 
-static inline RadioResponseInfo notSupported(int32_t serial) {
+inline RadioResponseInfo notSupported(int32_t serial) {
     return {
             .type = RadioResponseType::SOLICITED,
             .serial = serial,
@@ -48,7 +49,7 @@ static inline RadioResponseInfo notSupported(int32_t serial) {
     };
 }
 
-static inline RadioResponseInfo okay(int32_t serial) {
+inline RadioResponseInfo okay(int32_t serial) {
     return {
             .type = RadioResponseType::SOLICITED,
             .serial = serial,

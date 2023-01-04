@@ -54,9 +54,9 @@ ScopedAStatus RadioVoice::dial(int32_t serial, const aidl::Dial& dialInfo) {
 }
 
 ScopedAStatus RadioVoice::emergencyDial(  //
-        int32_t serial, const aidl::Dial& info, int32_t categories,
-        const std::vector<std::string>& urns, aidl::EmergencyCallRouting routing,
-        bool knownUserIntentEmerg, bool isTesting) {
+        int32_t serial, const aidl::Dial& /*info*/, int32_t /*categories*/,
+        const std::vector<std::string>& /*urns*/, aidl::EmergencyCallRouting /*routing*/,
+        bool /*knownUserIntentEmerg*/, bool /*isTesting*/) {
     LOG_UNIMPLEMENTED << serial;
     mResponse->emergencyDialResponse(okay(serial));
     return ok();
@@ -75,13 +75,13 @@ ScopedAStatus RadioVoice::explicitCallTransfer(int32_t serial) {
 }
 
 ScopedAStatus RadioVoice::getCallForwardStatus(int32_t serial,
-                                               const aidl::CallForwardInfo& callInfo) {
+                                               const aidl::CallForwardInfo& /*callInfo*/) {
     LOG_UNIMPLEMENTED << serial;
     mResponse->getCallForwardStatusResponse(notSupported(serial), {});
     return ok();
 }
 
-ScopedAStatus RadioVoice::getCallWaiting(int32_t serial, int32_t serviceClass) {
+ScopedAStatus RadioVoice::getCallWaiting(int32_t serial, int32_t /*serviceClass*/) {
     LOG_UNIMPLEMENTED << serial;
     mResponse->getCallWaitingResponse(notSupported(serial), {}, {});
     return ok();
@@ -131,13 +131,13 @@ ScopedAStatus RadioVoice::getTtyMode(int32_t serial) {
     return ok();
 }
 
-ScopedAStatus RadioVoice::handleStkCallSetupRequestFromSim(int32_t serial, bool accept) {
+ScopedAStatus RadioVoice::handleStkCallSetupRequestFromSim(int32_t serial, bool /*accept*/) {
     LOG_UNIMPLEMENTED << serial;
     mResponse->handleStkCallSetupRequestFromSimResponse(notSupported(serial));
     return ok();
 }
 
-ScopedAStatus RadioVoice::hangup(int32_t serial, int32_t gsmIndex) {
+ScopedAStatus RadioVoice::hangup(int32_t serial, int32_t /*gsmIndex*/) {
     LOG_UNIMPLEMENTED << serial;
     mResponse->hangupConnectionResponse(notSupported(serial));
     return ok();
@@ -172,20 +172,20 @@ ScopedAStatus RadioVoice::responseAcknowledgement() {
     return ok();
 }
 
-ScopedAStatus RadioVoice::sendBurstDtmf(int32_t serial, const std::string& dtmf, int32_t on,
-                                        int32_t off) {
+ScopedAStatus RadioVoice::sendBurstDtmf(int32_t serial, const std::string& /*dtmf*/, int32_t /*on*/,
+                                        int32_t /*off*/) {
     LOG_UNIMPLEMENTED << serial;
     mResponse->sendBurstDtmfResponse(notSupported(serial));
     return ok();
 }
 
-ScopedAStatus RadioVoice::sendCdmaFeatureCode(int32_t serial, const std::string& featureCode) {
+ScopedAStatus RadioVoice::sendCdmaFeatureCode(int32_t serial, const std::string& /*featureCode*/) {
     LOG_UNIMPLEMENTED << serial;
     mResponse->sendCdmaFeatureCodeResponse(notSupported(serial));
     return ok();
 }
 
-ScopedAStatus RadioVoice::sendDtmf(int32_t serial, const std::string& s) {
+ScopedAStatus RadioVoice::sendDtmf(int32_t serial, const std::string& /*s*/) {
     LOG_UNIMPLEMENTED << serial;
     mResponse->sendDtmfResponse(notSupported(serial));
     return ok();
@@ -197,25 +197,27 @@ ScopedAStatus RadioVoice::sendUssd(int32_t serial, const std::string& ussd) {
     return ok();
 }
 
-ScopedAStatus RadioVoice::separateConnection(int32_t serial, int32_t gsmIndex) {
+ScopedAStatus RadioVoice::separateConnection(int32_t serial, int32_t /*gsmIndex*/) {
     LOG_UNIMPLEMENTED << serial;
     mResponse->separateConnectionResponse(notSupported(serial));
     return ok();
 }
 
-ScopedAStatus RadioVoice::setCallForward(int32_t serial, const aidl::CallForwardInfo& callInfo) {
+ScopedAStatus RadioVoice::setCallForward(int32_t serial,
+                                         const aidl::CallForwardInfo& /*callInfo*/) {
     LOG_UNIMPLEMENTED << serial;
     mResponse->setCallForwardResponse(notSupported(serial));
     return ok();
 }
 
-ScopedAStatus RadioVoice::setCallWaiting(int32_t serial, bool enable, int32_t serviceClass) {
+ScopedAStatus RadioVoice::setCallWaiting(int32_t serial, bool /*enable*/,
+                                         int32_t /*serviceClass*/) {
     LOG_UNIMPLEMENTED << serial;
     mResponse->setCallWaitingResponse(notSupported(serial));
     return ok();
 }
 
-ScopedAStatus RadioVoice::setClir(int32_t serial, int32_t status) {
+ScopedAStatus RadioVoice::setClir(int32_t serial, int32_t /*status*/) {
     LOG_STUB << serial;
     mResponse->setClirResponse(notSupported(serial));
     return ok();
@@ -227,7 +229,7 @@ ScopedAStatus RadioVoice::setMute(int32_t serial, bool enable) {
     return ok();
 }
 
-ScopedAStatus RadioVoice::setPreferredVoicePrivacy(int32_t serial, bool enable) {
+ScopedAStatus RadioVoice::setPreferredVoicePrivacy(int32_t serial, bool /*enable*/) {
     LOG_UNIMPLEMENTED << serial;
     mResponse->setPreferredVoicePrivacyResponse(notSupported(serial));
     return ok();
@@ -244,7 +246,7 @@ ScopedAStatus RadioVoice::setResponseFunctions(
     return ok();
 }
 
-ScopedAStatus RadioVoice::setTtyMode(int32_t serial, aidl::TtyMode mode) {
+ScopedAStatus RadioVoice::setTtyMode(int32_t serial, aidl::TtyMode /*mode*/) {
     LOG_STUB << serial;
     mResponse->setTtyModeResponse(okay(serial));
     return ok();
@@ -256,7 +258,7 @@ ndk::ScopedAStatus RadioVoice::setVoNrEnabled(int32_t serial, [[maybe_unused]] b
     return ok();
 }
 
-ScopedAStatus RadioVoice::startDtmf(int32_t serial, const std::string& s) {
+ScopedAStatus RadioVoice::startDtmf(int32_t serial, const std::string& /*s*/) {
     LOG_UNIMPLEMENTED << serial;
     mResponse->startDtmfResponse(notSupported(serial));
     return ok();

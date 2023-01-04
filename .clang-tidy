@@ -1,0 +1,14 @@
+# Turn all the warnings from the checks above into errors.
+WarningsAsErrors: "*"
+
+FormatStyle: google
+
+CheckOptions:
+  - key:             readability-identifier-naming.IgnoreMainLikeFunctions
+    value:           1
+  - key:             cppcoreguidelines-macro-usage.AllowedRegexp
+    value:           "RADIO_MODULE"
+  - key:             readability-magic-numbers.IgnoredFloatingPointValues
+    value:           '1000.0'
+  - key:             readability-function-cognitive-complexity.IgnoreMacros
+    value:           1

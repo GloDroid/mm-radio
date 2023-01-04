@@ -29,14 +29,13 @@ namespace android::hardware::radio::mm {
 
 using ::ndk::ScopedAStatus;
 namespace aidl = ::aidl::android::hardware::radio::modem;
-using ::aidl::android::hardware::radio::AccessNetwork;
 using ::aidl::android::hardware::radio::RadioAccessFamily;
 using ::aidl::android::hardware::radio::RadioIndicationType;
 using ::aidl::android::hardware::radio::RadioTechnology;
 
 constexpr auto ok = &ScopedAStatus::ok;
 
-ScopedAStatus RadioModem::enableModem(int32_t serial, bool on) {
+ScopedAStatus RadioModem::enableModem(int32_t serial, bool /*on*/) {
     LOG_UNIMPLEMENTED << serial;
     mResponse->enableModemResponse(notSupported(serial));
     return ok();
@@ -60,7 +59,7 @@ ScopedAStatus RadioModem::getHardwareConfig(int32_t serial) {
     auto hw_config = std::vector<aidl::HardwareConfig>();
     auto modem = (aidl::HardwareConfig){
             .type = aidl::HardwareConfig::TYPE_MODEM,
-            .uuid = "MODEM-UUID-TODO",                     // TODO
+            .uuid = "MODEM-UUID-TODO",                     // TODO(nobody)
             .state = aidl::HardwareConfig::STATE_ENABLED,  // STATE_STANDBY,
     };
 
@@ -74,11 +73,11 @@ ScopedAStatus RadioModem::getHardwareConfig(int32_t serial) {
 
     auto sim = (aidl::HardwareConfig){
             .type = aidl::HardwareConfig::TYPE_SIM,
-            .uuid = "SIM-UUID-TODO",  // TODO
+            .uuid = "SIM-UUID-TODO",  // TODO(nobody)
             .state = aidl::HardwareConfig::STATE_ENABLED,
     };
     auto simConfig = (aidl::HardwareConfigSim){
-            .modemUuid = "MODEM-UUID-TODO",  // TODO
+            .modemUuid = "MODEM-UUID-TODO",  // TODO(nobody)
     };
 
     modem.modem.emplace_back(modemConfig);
@@ -109,9 +108,9 @@ ScopedAStatus RadioModem::getRadioCapability(int32_t serial) {
     LOG_STUB << serial;
 
     auto caps = (aidl::RadioCapability){
-            .logicalModemUuid = "com.mm-radio.lm0",
             .phase = aidl::RadioCapability::PHASE_CONFIGURED,
             .raf = (int32_t)RadioAccessFamily::LTE,
+            .logicalModemUuid = "com.mm-radio.lm0",
             .status = aidl::RadioCapability::STATUS_SUCCESS,
     };
 
@@ -119,25 +118,25 @@ ScopedAStatus RadioModem::getRadioCapability(int32_t serial) {
     return ok();
 }
 
-ScopedAStatus RadioModem::nvReadItem(int32_t serial, aidl::NvItem itemId) {
+ScopedAStatus RadioModem::nvReadItem(int32_t serial, aidl::NvItem /*temId*/) {
     LOG_UNIMPLEMENTED << serial;
     mResponse->nvReadItemResponse(notSupported(serial), {});
     return ok();
 }
 
-ScopedAStatus RadioModem::nvResetConfig(int32_t serial, aidl::ResetNvType resetType) {
+ScopedAStatus RadioModem::nvResetConfig(int32_t serial, aidl::ResetNvType /*resetType*/) {
     LOG_UNIMPLEMENTED << serial;
     mResponse->nvResetConfigResponse(notSupported(serial));
     return ok();
 }
 
-ScopedAStatus RadioModem::nvWriteCdmaPrl(int32_t serial, const std::vector<uint8_t>& prl) {
+ScopedAStatus RadioModem::nvWriteCdmaPrl(int32_t serial, const std::vector<uint8_t>& /*prl*/) {
     LOG_UNIMPLEMENTED << serial;
     mResponse->nvWriteCdmaPrlResponse(notSupported(serial));
     return ok();
 }
 
-ScopedAStatus RadioModem::nvWriteItem(int32_t serial, const aidl::NvWriteItem& item) {
+ScopedAStatus RadioModem::nvWriteItem(int32_t serial, const aidl::NvWriteItem& /*item*/) {
     LOG_UNIMPLEMENTED << serial;
     mResponse->nvWriteItemResponse(notSupported(serial));
     return ok();
@@ -154,20 +153,21 @@ ScopedAStatus RadioModem::responseAcknowledgement() {
     return ok();
 }
 
-ScopedAStatus RadioModem::sendDeviceState(int32_t serial, aidl::DeviceStateType type, bool state) {
+ScopedAStatus RadioModem::sendDeviceState(int32_t serial, aidl::DeviceStateType /*type*/,
+                                          bool /*state*/) {
     LOG_STUB << serial;
     mResponse->sendDeviceStateResponse(okay(serial));
     return ok();
 }
 
-ScopedAStatus RadioModem::setRadioCapability(int32_t serial, const aidl::RadioCapability& rc) {
+ScopedAStatus RadioModem::setRadioCapability(int32_t serial, const aidl::RadioCapability& /*rc*/) {
     LOG_UNIMPLEMENTED << serial;
     mResponse->setRadioCapabilityResponse(notSupported(serial), {});
     return ok();
 }
 
-ScopedAStatus RadioModem::setRadioPower(int32_t serial, bool powerOn, bool forEmergencyCall,
-                                        bool preferredForEmergencyCall) {
+ScopedAStatus RadioModem::setRadioPower(int32_t serial, bool /*powerOn*/, bool /*forEmergencyCall*/,
+                                        bool /*preferredForEmergencyCall*/) {
     LOG_STUB << serial;
     mResponse->setRadioPowerResponse(okay(serial));
     return ok();
