@@ -16,9 +16,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #pragma once
 
 #include <aidl/android/hardware/radio/sim/BnRadioSim.h>
+
+#include "mm/Modem.h"
 
 namespace android::hardware::radio::mm {
 
@@ -104,7 +107,10 @@ class RadioSim : public aidl::android::hardware::radio::sim::BnRadioSim {
     std::shared_ptr<::aidl::android::hardware::radio::sim::IRadioSimResponse> mResponse;
     std::shared_ptr<::aidl::android::hardware::radio::sim::IRadioSimIndication> mIndication;
 
+    std::shared_ptr<ModemSim> mModemSim;
+
   public:
+    void bindModem(std::shared_ptr<ModemSim> modemSim) { mModemSim = std::move(modemSim); }
 };
 
 }  // namespace android::hardware::radio::mm

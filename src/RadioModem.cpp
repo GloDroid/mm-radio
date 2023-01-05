@@ -32,6 +32,7 @@ namespace aidl = ::aidl::android::hardware::radio::modem;
 using ::aidl::android::hardware::radio::RadioAccessFamily;
 using ::aidl::android::hardware::radio::RadioIndicationType;
 using ::aidl::android::hardware::radio::RadioTechnology;
+using ::aidl::android::hardware::radio::modem::RadioState;
 
 constexpr auto ok = &ScopedAStatus::ok;
 
@@ -49,7 +50,13 @@ ScopedAStatus RadioModem::getBasebandVersion(int32_t serial) {
 
 ScopedAStatus RadioModem::getDeviceIdentity(int32_t serial) {
     LOG_STUB << serial;
-    mResponse->getDeviceIdentityResponse(okay(serial), "123456789012345", {}, {}, "12341234");
+    if (!mModemSim) {
+        mResponse->getDeviceIdentityResponse(error(serial, RadioError::SIM_ABSENT), {}, {}, {}, {});
+        return ok();
+    }
+
+    mResponse->getDeviceIdentityResponse(okay(serial), mModemSim->getIdentifier(), "00", "00",
+                                         "00");
     return ok();
 }
 
@@ -100,21 +107,13 @@ ScopedAStatus RadioModem::getModemActivityInfo(int32_t serial) {
 
 ScopedAStatus RadioModem::getModemStackStatus(int32_t serial) {
     LOG_STUB << serial;
-    mResponse->getModemStackStatusResponse(okay(serial), true);
+    mResponse->getModemStackStatusResponse(okay(serial), false);
     return ok();
 }
 
 ScopedAStatus RadioModem::getRadioCapability(int32_t serial) {
-    LOG_STUB << serial;
-
-    auto caps = (aidl::RadioCapability){
-            .phase = aidl::RadioCapability::PHASE_CONFIGURED,
-            .raf = (int32_t)RadioAccessFamily::LTE,
-            .logicalModemUuid = "com.mm-radio.lm0",
-            .status = aidl::RadioCapability::STATUS_SUCCESS,
-    };
-
-    mResponse->getRadioCapabilityResponse(okay(serial), caps);
+    LOG_CALL << serial;
+    mResponse->getRadioCapabilityResponse(okay(serial), mRadioCapability);
     return ok();
 }
 
@@ -153,23 +152,34 @@ ScopedAStatus RadioModem::responseAcknowledgement() {
     return ok();
 }
 
-ScopedAStatus RadioModem::sendDeviceState(int32_t serial, aidl::DeviceStateType /*type*/,
-                                          bool /*state*/) {
-    LOG_STUB << serial;
+ScopedAStatus RadioModem::sendDeviceState(int32_t serial, aidl::DeviceStateType type, bool state) {
+    LOG_UNIMPLEMENTED << serial << " type: " << aidl::toString(type) << " state: " << state;
     mResponse->sendDeviceStateResponse(okay(serial));
     return ok();
 }
 
-ScopedAStatus RadioModem::setRadioCapability(int32_t serial, const aidl::RadioCapability& /*rc*/) {
-    LOG_UNIMPLEMENTED << serial;
-    mResponse->setRadioCapabilityResponse(notSupported(serial), {});
+ScopedAStatus RadioModem::setRadioCapability(int32_t serial, const aidl::RadioCapability& rc) {
+    LOG_CALL << serial << ' ' << rc.toString();
+    mRadioCapability = rc;
+    mResponse->setRadioCapabilityResponse(notSupported(serial), mRadioCapability);
     return ok();
 }
 
-ScopedAStatus RadioModem::setRadioPower(int32_t serial, bool /*powerOn*/, bool /*forEmergencyCall*/,
+ScopedAStatus RadioModem::setRadioPower(int32_t serial, bool powerOn, bool /*forEmergencyCall*/,
                                         bool /*preferredForEmergencyCall*/) {
-    LOG_STUB << serial;
+    LOG_CALL << serial << " PowerOn: " << powerOn;
+
+    if (!mModem) {
+        mResponse->setRadioPowerResponse(error(serial, RadioError::SIM_ABSENT));
+        return ok();
+    }
+
     mResponse->setRadioPowerResponse(okay(serial));
+    if (powerOn)
+        mModem->enable();
+    else
+        mModem->disable();
+
     return ok();
 }
 
@@ -181,10 +191,38 @@ ScopedAStatus RadioModem::setResponseFunctions(
     mResponse = response;
     mIndication = indication;
 
-    mIndication->rilConnected(RadioIndicationType::UNSOLICITED);
-    mIndication->radioStateChanged(RadioIndicationType::UNSOLICITED, aidl::RadioState::ON);
+    mRadioCapability = (aidl::RadioCapability){
+            .phase = aidl::RadioCapability::PHASE_CONFIGURED,
+            .raf = (int32_t)RadioAccessFamily::LTE,
+            .logicalModemUuid = "com.mm-radio.lm0",
+            .status = aidl::RadioCapability::STATUS_SUCCESS,
+    };
+
+    rilConnected();
 
     return ok();
+}
+
+// Internal communication
+
+void RadioModem::radioStateChanged(bool on) {
+    LOG(VERBOSE) << "Radio state changed: " << on;
+    mIndication->radioStateChanged(RadioIndicationType::UNSOLICITED,
+                                   on ? RadioState::ON : RadioState::OFF);
+}
+
+void RadioModem::rilConnected() {
+    if (!mIndication) return;
+
+    LOG_CALL;
+
+    if (!mModem) {
+        mIndication->radioStateChanged(RadioIndicationType::UNSOLICITED, RadioState::UNAVAILABLE);
+    } else {
+        mIndication->rilConnected(RadioIndicationType::UNSOLICITED);
+        mModem->refreshModemState();
+        mIndication->radioCapabilityIndication(RadioIndicationType::UNSOLICITED, mRadioCapability);
+    }
 }
 
 }  // namespace android::hardware::radio::mm

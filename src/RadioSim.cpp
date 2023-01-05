@@ -91,29 +91,35 @@ ScopedAStatus RadioSim::getFacilityLockForApp(  //
 ScopedAStatus RadioSim::getIccCardStatus(int32_t serial) {
     LOG_STUB << serial;
 
-    auto cardStatus = (aidl::CardStatus){
-            .cardState = aidl::CardStatus::STATE_PRESENT,
-            .universalPinState = aidl::PinState::UNKNOWN,
-            .gsmUmtsSubscriptionAppIndex = 0,
-            .cdmaSubscriptionAppIndex = -1,
-            .imsSubscriptionAppIndex = -1,
-            .atr = {},
-            .iccid = "8938003992840681512F",
-    };
-    cardStatus.applications.emplace_back((AppStatus){
-            .appType = AppStatus::APP_TYPE_USIM,
-            .appState = AppStatus::APP_STATE_READY,
-            .aidPtr = "0xA0 0x00 0x00 0x00 0x87 0x10 0x02 0xFF 0xFF 0xFF 0xFF 0x89",
-            .appLabelPtr = "",
-            .pin1 = aidl::PinState::UNKNOWN,
-            .pin2 = aidl::PinState::UNKNOWN,
-    });
-    cardStatus.applications.emplace_back((AppStatus){
-            .appType = AppStatus::APP_TYPE_RUIM,
-    });
-    cardStatus.applications.emplace_back((AppStatus){
-            .appType = AppStatus::APP_TYPE_ISIM,
-    });
+    aidl::CardStatus cardStatus{};
+
+    if (mModemSim) {
+        cardStatus = (aidl::CardStatus){
+                .cardState = mModemSim->isActive() ? int(aidl::CardStatus::STATE_PRESENT)
+                                                   : int(aidl::CardStatus::STATE_ABSENT),
+                .universalPinState = aidl::PinState::UNKNOWN,
+                .gsmUmtsSubscriptionAppIndex = 0,
+                .cdmaSubscriptionAppIndex = -1,
+                .imsSubscriptionAppIndex = -1,
+                .atr = {},
+                .iccid = mModemSim->getIdentifier(),
+                .eid = mModemSim->getEid(),
+        };
+        cardStatus.applications.emplace_back((AppStatus){
+                .appType = AppStatus::APP_TYPE_USIM,
+                .appState = AppStatus::APP_STATE_READY,
+                .aidPtr = "0xA0 0x00 0x00 0x00 0x87 0x10 0x02 0xFF 0xFF 0xFF 0xFF 0x89",
+                .appLabelPtr = "",
+                .pin1 = aidl::PinState::UNKNOWN,
+                .pin2 = aidl::PinState::UNKNOWN,
+        });
+        cardStatus.applications.emplace_back((AppStatus){
+                .appType = AppStatus::APP_TYPE_RUIM,
+        });
+        cardStatus.applications.emplace_back((AppStatus){
+                .appType = AppStatus::APP_TYPE_ISIM,
+        });
+    }
     mResponse->getIccCardStatusResponse(okay(serial), cardStatus);
     return ok();
 }

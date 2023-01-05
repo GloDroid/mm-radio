@@ -16,9 +16,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #pragma once
 
 #include <aidl/android/hardware/radio/voice/BnRadioVoice.h>
+
+#include <memory>
+
+#include "mm/ModemVoice.h"
 
 namespace android::hardware::radio::mm {
 
@@ -81,7 +86,12 @@ class RadioVoice : public aidl::android::hardware::radio::voice::BnRadioVoice {
     std::shared_ptr<::aidl::android::hardware::radio::voice::IRadioVoiceResponse> mResponse;
     std::shared_ptr<::aidl::android::hardware::radio::voice::IRadioVoiceIndication> mIndication;
 
+    std::shared_ptr<ModemVoice> mModemVoice;
+
   public:
+    void bindModem(std::shared_ptr<ModemVoice> modemVoice) { mModemVoice = std::move(modemVoice); }
+
+    void callStateChanged();
 };
 
 }  // namespace android::hardware::radio::mm
