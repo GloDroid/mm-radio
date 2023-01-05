@@ -16,9 +16,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #pragma once
 
 #include <aidl/android/hardware/radio/modem/BnRadioModem.h>
+
+#include "mm/Modem.h"
 
 namespace android::hardware::radio::mm {
 
@@ -55,7 +58,22 @@ class RadioModem : public aidl::android::hardware::radio::modem::BnRadioModem {
     std::shared_ptr<::aidl::android::hardware::radio::modem::IRadioModemResponse> mResponse;
     std::shared_ptr<::aidl::android::hardware::radio::modem::IRadioModemIndication> mIndication;
 
+    aidl::android::hardware::radio::modem::RadioCapability mRadioCapability{};
+
+    std::shared_ptr<ModemSim> mModemSim;
+    std::shared_ptr<Modem> mModem;
+
   public:
+    void bindModem(std::shared_ptr<Modem> modem) {
+        mModem = std::move(modem);
+        if (!mModem) return;
+        mModemSim = mModem->getSim();
+        if (!mModemSim) mModem = {};
+    }
+
+    void radioStateChanged(bool on);
+
+    void rilConnected();
 };
 
 }  // namespace android::hardware::radio::mm

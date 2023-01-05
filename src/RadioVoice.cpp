@@ -25,13 +25,47 @@
 
 namespace android::hardware::radio::mm {
 
+using ::aidl::android::hardware::radio::RadioIndicationType;
 using ::ndk::ScopedAStatus;
 namespace aidl = ::aidl::android::hardware::radio::voice;
 constexpr auto ok = &ScopedAStatus::ok;
 
+static std::optional<int> mmToAidlState(int mmState) {
+    switch (mmState) {
+        case MM_CALL_STATE_ACTIVE:
+            return aidl::Call::STATE_ACTIVE;
+        case MM_CALL_STATE_DIALING:
+            return aidl::Call::STATE_DIALING;
+        case MM_CALL_STATE_RINGING_IN:
+            return aidl::Call::STATE_INCOMING;
+        case MM_CALL_STATE_RINGING_OUT:
+            return aidl::Call::STATE_ALERTING;
+        case MM_CALL_STATE_HELD:
+            return aidl::Call::STATE_HOLDING;
+        case MM_CALL_STATE_WAITING:
+            return aidl::Call::STATE_WAITING;
+        default:
+            return {};
+    }
+}
+
 ScopedAStatus RadioVoice::acceptCall(int32_t serial) {
-    LOG_UNIMPLEMENTED << serial;
-    mResponse->acceptCallResponse(notSupported(serial));
+    LOG_CALL << serial;
+
+    if (!mModemVoice) {
+        mResponse->acceptCallResponse(error(serial, RadioError::SIM_ABSENT));
+        return ok();
+    }
+
+    auto call = mModemVoice->getIncomingCall();
+    if (!call) {
+        mResponse->acceptCallResponse(error(serial, RadioError::INVALID_STATE));
+        return ok();
+    }
+
+    call->accept();
+
+    mResponse->acceptCallResponse(okay(serial));
     return ok();
 }
 
@@ -48,7 +82,14 @@ ScopedAStatus RadioVoice::conference(int32_t serial) {
 }
 
 ScopedAStatus RadioVoice::dial(int32_t serial, const aidl::Dial& dialInfo) {
-    LOG_STUB << serial << " DialInfo: " << dialInfo.toString();
+    LOG_CALL << serial;
+    if (!mModemVoice) {
+        mResponse->dialResponse(error(serial, RadioError::SIM_ABSENT));
+        return ok();
+    }
+
+    auto call = mModemVoice->createCall(dialInfo.address);
+    call->start();
     mResponse->dialResponse(okay(serial));
     return ok();
 }
@@ -100,9 +141,46 @@ ScopedAStatus RadioVoice::getClir(int32_t serial) {
 }
 
 ScopedAStatus RadioVoice::getCurrentCalls(int32_t serial) {
-    LOG_STUB << serial;
-    auto calls = std::vector<aidl::Call>();
-    mResponse->getCurrentCallsResponse(okay(serial), calls);
+    LOG_CALL << serial;
+    if (!mModemVoice) {
+        mResponse->getCurrentCallsResponse(error(serial, RadioError::SIM_ABSENT), {});
+        return ok();
+    }
+
+    auto outCalls = std::vector<aidl::Call>();
+
+    auto calls = mModemVoice->getNotTerminatedCallsList();
+    for (auto& call : calls) {
+        call->dump();
+        auto state = mmToAidlState(call->getState());
+        if (!state) {
+            LOG(ERROR) << "Unknown call state: " << call->getState();
+            continue;
+        }
+
+        auto outCall = (aidl::Call){
+                .state = *state,
+                .index = call->getIndex() + 1,
+                .toa = {},
+                .isMpty = call->isMultiparty(),
+                .isMT = call->getDirection() == MM_CALL_DIRECTION_INCOMING,
+                .als = {},
+                .isVoice = true,
+                .isVoicePrivacy = false,
+                .number = call->getNumber(),
+                .numberPresentation = aidl::Call::PRESENTATION_ALLOWED,
+                .name = "",
+                .namePresentation = aidl::Call::PRESENTATION_ALLOWED,
+                .uusInfo = {},
+                .audioQuality = {},
+        };
+
+        LOG(INFO) << "Call " << outCall.index << ": " << outCall.number;
+
+        outCalls.emplace_back(outCall);
+    };
+
+    mResponse->getCurrentCallsResponse(okay(serial), outCalls);
     return ok();
 }
 
@@ -138,20 +216,55 @@ ScopedAStatus RadioVoice::handleStkCallSetupRequestFromSim(int32_t serial, bool 
 }
 
 ScopedAStatus RadioVoice::hangup(int32_t serial, int32_t /*gsmIndex*/) {
-    LOG_UNIMPLEMENTED << serial;
-    mResponse->hangupConnectionResponse(notSupported(serial));
+    LOG_CALL << serial;
+    if (!mModemVoice) {
+        mResponse->hangupConnectionResponse(error(serial, RadioError::SIM_ABSENT));
+        return ok();
+    }
+
+    auto call = mModemVoice->getActiveCall();
+    if (!call) {
+        mResponse->hangupConnectionResponse(error(serial, RadioError::INVALID_STATE));
+        return ok();
+    }
+
+    call->hangup();
+    mResponse->hangupConnectionResponse(okay(serial));
+
     return ok();
 }
 
 ScopedAStatus RadioVoice::hangupForegroundResumeBackground(int32_t serial) {
-    LOG_UNIMPLEMENTED << serial;
-    mResponse->hangupForegroundResumeBackgroundResponse(notSupported(serial));
+    LOG_CALL << serial;
+    if (!mModemVoice) {
+        mResponse->hangupForegroundResumeBackgroundResponse(error(serial, RadioError::SIM_ABSENT));
+        return ok();
+    }
+
+    auto calls = mModemVoice->getNotTerminatedCallsList();
+    for (auto& call : calls) {
+        if (call->getState() != MM_CALL_STATE_ACTIVE) {
+            call->hangup();
+        }
+    }
+
+    mResponse->hangupForegroundResumeBackgroundResponse(okay(serial));
     return ok();
 }
 
 ScopedAStatus RadioVoice::hangupWaitingOrBackground(int32_t serial) {
-    LOG_UNIMPLEMENTED << serial;
-    mResponse->hangupWaitingOrBackgroundResponse(notSupported(serial));
+    LOG_CALL << serial;
+    if (!mModemVoice) {
+        mResponse->hangupWaitingOrBackgroundResponse(error(serial, RadioError::SIM_ABSENT));
+        return ok();
+    }
+
+    auto calls = mModemVoice->getNotTerminatedCallsList();
+    for (auto& call : calls) {
+        call->hangup();
+    }
+
+    mResponse->hangupWaitingOrBackgroundResponse(okay(serial));
     return ok();
 }
 
@@ -162,8 +275,22 @@ ScopedAStatus RadioVoice::isVoNrEnabled(int32_t serial) {
 }
 
 ScopedAStatus RadioVoice::rejectCall(int32_t serial) {
-    LOG_UNIMPLEMENTED << serial;
-    mResponse->rejectCallResponse(notSupported(serial));
+    LOG_CALL << serial;
+
+    if (!mModemVoice) {
+        mResponse->rejectCallResponse(error(serial, RadioError::SIM_ABSENT));
+        return ok();
+    }
+
+    auto call = mModemVoice->getIncomingCall();
+    if (!call) {
+        mResponse->rejectCallResponse(error(serial, RadioError::INVALID_STATE));
+        return ok();
+    }
+
+    call->hangup();
+    mResponse->rejectCallResponse(okay(serial));
+
     return ok();
 }
 
@@ -185,9 +312,20 @@ ScopedAStatus RadioVoice::sendCdmaFeatureCode(int32_t serial, const std::string&
     return ok();
 }
 
-ScopedAStatus RadioVoice::sendDtmf(int32_t serial, const std::string& /*s*/) {
-    LOG_UNIMPLEMENTED << serial;
-    mResponse->sendDtmfResponse(notSupported(serial));
+ScopedAStatus RadioVoice::sendDtmf(int32_t serial, const std::string& s) {
+    LOG_CALL << serial << ": " << s;
+
+    if (!mModemVoice) {
+        mResponse->sendDtmfResponse(error(serial, RadioError::SIM_ABSENT));
+        return ok();
+    }
+    auto call = mModemVoice->getActiveCall();
+    if (!call) {
+        mResponse->sendDtmfResponse(error(serial, RadioError::INVALID_STATE));
+        return ok();
+    }
+    call->sendDtmf(s);
+    mResponse->sendDtmfResponse(okay(serial));
     return ok();
 }
 
@@ -258,9 +396,20 @@ ndk::ScopedAStatus RadioVoice::setVoNrEnabled(int32_t serial, [[maybe_unused]] b
     return ok();
 }
 
-ScopedAStatus RadioVoice::startDtmf(int32_t serial, const std::string& /*s*/) {
-    LOG_UNIMPLEMENTED << serial;
-    mResponse->startDtmfResponse(notSupported(serial));
+ScopedAStatus RadioVoice::startDtmf(int32_t serial, const std::string& s) {
+    LOG_CALL << serial << ": " << s;
+
+    if (!mModemVoice) {
+        mResponse->startDtmfResponse(error(serial, RadioError::SIM_ABSENT));
+        return ok();
+    }
+    auto call = mModemVoice->getActiveCall();
+    if (!call) {
+        mResponse->startDtmfResponse(error(serial, RadioError::INVALID_STATE));
+        return ok();
+    }
+    call->sendDtmf(s);
+    mResponse->startDtmfResponse(okay(serial));
     return ok();
 }
 
@@ -274,6 +423,13 @@ ScopedAStatus RadioVoice::switchWaitingOrHoldingAndActive(int32_t serial) {
     LOG_UNIMPLEMENTED << serial;
     mResponse->switchWaitingOrHoldingAndActiveResponse(notSupported(serial));
     return ok();
+}
+
+// Internal API
+
+void RadioVoice::callStateChanged() {
+    LOG_CALL;
+    if (mIndication) mIndication->callStateChanged(RadioIndicationType::UNSOLICITED);
 }
 
 }  // namespace android::hardware::radio::mm

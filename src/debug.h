@@ -16,6 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #pragma once
 
 #include <aidl/android/hardware/radio/RadioResponseInfo.h>
@@ -54,6 +55,14 @@ inline RadioResponseInfo okay(int32_t serial) {
             .type = RadioResponseType::SOLICITED,
             .serial = serial,
             .error = RadioError::NONE,
+    };
+}
+
+inline RadioResponseInfo error(int32_t serial, RadioError error) {
+    return {
+            .type = RadioResponseType::SOLICITED,
+            .serial = serial,
+            .error = error,
     };
 }
 

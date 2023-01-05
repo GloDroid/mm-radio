@@ -16,9 +16,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #pragma once
 
 #include <aidl/android/hardware/radio/config/BnRadioConfig.h>
+
+using SimSlotStatusList = std::vector<aidl::android::hardware::radio::config::SimSlotStatus>;
 
 namespace android::hardware::radio::mm {
 
@@ -42,8 +45,14 @@ class RadioConfig : public aidl::android::hardware::radio::config::BnRadioConfig
     std::shared_ptr<aidl::android::hardware::radio::config::IRadioConfigResponse> mResponse;
     std::shared_ptr<aidl::android::hardware::radio::config::IRadioConfigIndication> mIndication;
 
+    std::function<SimSlotStatusList()> mGetSimSlotStatusCb;
+
   public:
     RadioConfig() = default;
+
+    void bindManager(decltype(mGetSimSlotStatusCb) cb) { mGetSimSlotStatusCb = std::move(cb); }
+
+    void simSlotStatusChanged();
 };
 
 }  // namespace android::hardware::radio::mm

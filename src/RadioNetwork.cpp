@@ -343,6 +343,12 @@ ScopedAStatus RadioNetwork::setSignalStrengthReportingCriteria(
     LOG_STUB << serial;
     auto resp = okay(serial);
     if (infos.empty()) resp.error = RadioError::INVALID_ARGUMENTS;
+
+    // foreach infos, log the threshold info
+    // for (const auto& info : infos) {
+    //     LOG_STUB << info.toString();
+    // }
+
     mResponse->setSignalStrengthReportingCriteriaResponse(resp);
     return ok();
 }

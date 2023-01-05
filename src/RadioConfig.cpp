@@ -27,13 +27,13 @@
 
 namespace android::hardware::radio::mm {
 
-using ::aidl::android::hardware::radio::sim::CardStatus;
+using ::aidl::android::hardware::radio::RadioIndicationType;
 using ::ndk::ScopedAStatus;
 namespace aidl = ::aidl::android::hardware::radio::config;
 constexpr auto ok = &ScopedAStatus::ok;
 
 ScopedAStatus RadioConfig::getHalDeviceCapabilities(int32_t serial) {
-    LOG_STUB << serial;
+    LOG_CALL << serial;
     mResponse->getHalDeviceCapabilitiesResponse(okay(serial), true);
     return ok();
 }
@@ -60,21 +60,7 @@ ScopedAStatus RadioConfig::getPhoneCapability(int32_t serial) {
 
 ScopedAStatus RadioConfig::getSimSlotsStatus(int32_t serial) {
     LOG_STUB << serial;
-    auto slots = std::vector<aidl::SimSlotStatus>();
-    auto slotStatus = (aidl::SimSlotStatus){
-            .cardState = CardStatus::STATE_PRESENT,
-            .atr = {},
-            .eid = {},
-    };
-
-    slotStatus.portInfo.emplace_back((aidl::SimPortInfo){
-            .iccId = "8938003992840681512F",
-            .logicalSlotId = 0,
-            .portActive = true,
-    });
-
-    slots.emplace_back(slotStatus);
-    mResponse->getSimSlotsStatusResponse(okay(serial), slots);
+    mResponse->getSimSlotsStatusResponse(okay(serial), mGetSimSlotStatusCb());
     return ok();
 }
 
@@ -111,6 +97,13 @@ ScopedAStatus RadioConfig::setSimSlotsMapping(  //
     LOG_UNIMPLEMENTED << serial;
     mResponse->setSimSlotsMappingResponse(okay(serial));
     return ok();
+}
+
+// Internal API:
+void RadioConfig::simSlotStatusChanged() {
+    LOG_CALL;
+    if (mIndication)
+        mIndication->simSlotsStatusChanged(RadioIndicationType::UNSOLICITED, mGetSimSlotStatusCb());
 }
 
 }  // namespace android::hardware::radio::mm
