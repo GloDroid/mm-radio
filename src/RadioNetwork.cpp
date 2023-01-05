@@ -385,14 +385,14 @@ ScopedAStatus RadioNetwork::supplyNetworkDepersonalization(int32_t serial,
 
 ScopedAStatus RadioNetwork::setUsageSetting(int32_t serial, aidl::UsageSetting usageSetting) {
     LOG_UNIMPLEMENTED << serial;
-    state.usageSetting = usageSetting;
+    mState.usageSetting = usageSetting;
     mResponse->setUsageSettingResponse(okay(serial));
     return ok();
 }
 
 ScopedAStatus RadioNetwork::getUsageSetting(int32_t serial) {
     LOG_STUB << serial;
-    mResponse->getUsageSettingResponse(okay(serial), state.usageSetting);
+    mResponse->getUsageSettingResponse(okay(serial), mState.usageSetting);
     return ok();
 }
 
