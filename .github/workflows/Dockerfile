@@ -13,7 +13,7 @@ ENV USER_HOME /github/home
 RUN mkdir -pv ${USER_HOME}
 
 # Install aospless package (produced by GloDroid/aospext)
-RUN wget -P /github https://github.com/GloDroid/mm-radio/files/10338695/aospless_mm_radio.tar.xz.zip && \
+RUN wget -P /github https://github.com/GloDroid/mm-radio/files/10360721/aospless_mm_radio.tar.xz.zip && \
     cd /github && mv aospless_mm_radio.tar.xz.zip aospless_mm_radio.tar.xz && tar xf aospless_mm_radio.tar.xz && \
     ln -s ../workspace/ /github/aospless/src
 
