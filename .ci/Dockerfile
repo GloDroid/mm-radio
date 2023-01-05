@@ -37,8 +37,11 @@ RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> \
 USER ${RUN_USER}
 
 # Install aospless package (produced by GloDroid/aospext)
-RUN wget -P ${USER_HOME} https://github.com/GloDroid/mm-radio/files/10338695/aospless_mm_radio.tar.xz.zip && \
-    cd ${USER_HOME} && mv aospless_mm_radio.tar.xz.zip aospless_mm_radio.tar.xz && tar xf aospless_mm_radio.tar.xz && \
+RUN wget -P ${USER_HOME} https://github.com/GloDroid/mm-radio/files/10360721/aospless_mm_radio.tar.xz.zip && \
+    cd ${USER_HOME} && mv aospless_mm_radio.tar.xz.zip aospless_mm_radio.tar.xz && \
+    sha256sum aospless_mm_radio.tar.xz && \
+    (echo 5365466cee98abb8b4b80b06fb1096912ec83d39b1c65e5cd6ecf3d97dcaffe5 aospless_mm_radio.tar.xz | sha256sum --check) && \
+    tar xf aospless_mm_radio.tar.xz && \
     ln -s ../mm-radio/ ${USER_HOME}/aospless/src
 
 # Create project path

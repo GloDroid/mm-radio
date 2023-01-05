@@ -73,7 +73,7 @@ build_deploy: ## Build for Andoid and deploy onto the target device (require act
 	$(DOCKER_BIN) exec -it $(IMAGE_NAME) bash -c "cp -r ~/aospless/install/* ~/mm-radio/.out/arm64"
 	adb push .out/arm64/vendor/bin/hw/android.hardware.mm-radio-service /vendor/bin/hw/android.hardware.mm-radio-service
 	adb shell stop
-	adb shell stop vendor.radio-hal && adb shell vendor.radio-hal || true
+	adb shell stop vendor.radio-hal && adb shell start vendor.radio-hal || true
 	bash -c '[[ "$$HWCLOG" -eq "1" ]] && adb logcat -b radio -c || true'
 	adb shell start
 	bash -c '[[ "$$HWCLOG" -eq "1" ]] && adb logcat -b radio | grep -i mm-radio || true'

@@ -21,7 +21,11 @@ srcs = [
 cflags = ['-Wno-unused-parameter']
 
 deps = [
-    dependency('cutils'),
+    dependency('android_base'),
+    dependency('android_binder_ndk'),
+    dependency('android_cutils'),
+    dependency('android_log'),
+    dependency('android_utils'),
     dependency('android.hardware.radio-V1-ndk'),
     dependency('android.hardware.radio.config-V1-ndk'),
     dependency('android.hardware.radio.data-V1-ndk'),
@@ -30,6 +34,10 @@ deps = [
     dependency('android.hardware.radio.network-V1-ndk'),
     dependency('android.hardware.radio.sim-V1-ndk'),
     dependency('android.hardware.radio.voice-V1-ndk'),
+    dependency('glib-2.0'),
+    dependency('gmodule-2.0'),
+    dependency('gobject-2.0'),
+    dependency('mm-glib'),
 ]
 
 executable(
