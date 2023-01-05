@@ -1,4 +1,6 @@
-on: [push]
+on:
+  pull_request:
+    type: [synchronize]
 
 jobs:
   hello_world_job:
@@ -7,6 +9,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
       - name: Run CI
         id: hello
         uses: ./.github/workflows/
