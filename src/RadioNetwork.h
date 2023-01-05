@@ -100,7 +100,7 @@ class RadioNetwork : public aidl::android::hardware::radio::network::BnRadioNetw
     std::shared_ptr<::aidl::android::hardware::radio::network::IRadioNetworkIndication> mIndication;
 
   private:
-    RadioNetworkState state;
+    RadioNetworkState mState;
 };
 
 }  // namespace android::hardware::radio::mm

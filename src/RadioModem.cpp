@@ -56,7 +56,7 @@ ScopedAStatus RadioModem::getDeviceIdentity(int32_t serial) {
 ScopedAStatus RadioModem::getHardwareConfig(int32_t serial) {
     LOG_CALL << serial;
 
-    auto hw_config = std::vector<aidl::HardwareConfig>();
+    auto hwConfig = std::vector<aidl::HardwareConfig>();
     auto modem = (aidl::HardwareConfig){
             .type = aidl::HardwareConfig::TYPE_MODEM,
             .uuid = "MODEM-UUID-TODO",                     // TODO(nobody)
@@ -82,10 +82,10 @@ ScopedAStatus RadioModem::getHardwareConfig(int32_t serial) {
 
     modem.modem.emplace_back(modemConfig);
     sim.sim.emplace_back(simConfig);
-    hw_config.emplace_back(modem);
-    hw_config.emplace_back(sim);
+    hwConfig.emplace_back(modem);
+    hwConfig.emplace_back(sim);
 
-    mResponse->getHardwareConfigResponse(okay(serial), hw_config);
+    mResponse->getHardwareConfigResponse(okay(serial), hwConfig);
 
     return ok();
 }
