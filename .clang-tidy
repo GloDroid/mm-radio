@@ -7,7 +7,7 @@ CheckOptions:
   - key:             readability-identifier-naming.IgnoreMainLikeFunctions
     value:           1
   - key:             cppcoreguidelines-macro-usage.AllowedRegexp
-    value:           "RADIO_MODULE"
+    value:           "RADIO_MODULE|LOG_TAG"
   - key:             readability-magic-numbers.IgnoredFloatingPointValues
     value:           '1000.0'
   - key:             readability-function-cognitive-complexity.IgnoreMacros
@@ -44,3 +44,7 @@ CheckOptions:
     value:           'camelBack'
   - key:             readability-identifier-naming.StructCase
     value:           'CamelCase'
+  - key:             readability-identifier-naming.TypeAliasCase
+    value:           'CamelCase'
+  - key:             readability-identifier-naming.TypeAliasPrefix
+    value:           ''

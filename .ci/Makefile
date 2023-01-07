@@ -31,6 +31,7 @@ TIDY_CHECKS_FINE := *                                   \
     -hicpp-vararg                                       \
     -hicpp-signed-bitwise                               \
     -readability-identifier-length                      \
+    -cppcoreguidelines-pro-type-cstyle-cast             \
 
 TIDY_CHECKS_NORMAL :=                                   \
     $(TIDY_CHECKS_FINE)                                 \
