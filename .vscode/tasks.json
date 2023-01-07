@@ -11,8 +11,7 @@
                     "owner": "mm",
                     "pattern": [
                         {
-                            "regexp":
-                                    "^\/home\/user\/mm-radio\/(.*?):(\\d+):(\\d*):?\\s+(?:fatal\\s+)?(warning|error):\\s+(.*)$",
+                            "regexp": "^\/home\/user\/mm-radio\/(.*?):(\\d+):(\\d*):?\\s+(?:fatal\\s+)?(warning|error):\\s+(.*)$",
                             "file": 1,
                             "line": 2,
                             "column": 3,
@@ -22,11 +21,23 @@
                     ]
                 },
                 {
+                    "owner": "mm2",
+                    "pattern": [
+                        {
+                            "regexp": "^..\/out_src\/(.*?):(\\d+):(\\d*):?\\s+(?:fatal\\s+)?(warning|error):\\s+(.*)$",
+                            "file": 1,
+                            "line": 2,
+                            "column": 3,
+                            "severity": 4,
+                            "message": 5,
+                        }
+                    ]
+                },
+                {
                     "owner": "mm1",
                     "pattern": [
                         {
-                            "regexp":
-                                    "^(.*?):(\\d+):(\\d*):?\\s+(?:fatal\\s+)?(warning|error):\\s+(.*)$",
+                            "regexp": "^(.*?):(\\d+):(\\d*):?\\s+(?:fatal\\s+)?(warning|error):\\s+(.*)$",
                             "file": 1,
                             "line": 2,
                             "column": 3,
@@ -38,7 +49,7 @@
             ],
             "command": "make ci",
             // "command": "make ci_fast",
-            // "command": "make bd",
+            // "command": "ADBLOG=1 make bd",
             "group": {
                 "kind": "build",
                 "isDefault": true

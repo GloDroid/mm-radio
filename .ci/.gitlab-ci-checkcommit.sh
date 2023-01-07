@@ -62,7 +62,7 @@ git log --pretty='%h' FETCH_HEAD..HEAD | while read h; do
 		exit 1
 	fi
 
-	git show "$h" -- | clang-format-diff-15 -p 1 -style=file > /tmp/format-fixup.patch
+	git show "$h" -- | clang-format-diff-15 -p 1 -style=file -regex=".*\\.(cpp|cc|c\+\+|cxx|c|cl|h|hh|hpp|m|mm|inc|js|ts|proto)" > /tmp/format-fixup.patch
 	if [ -s  /tmp/format-fixup.patch ]; then
 		cat /tmp/format-fixup.patch >&2
 		exit 1
