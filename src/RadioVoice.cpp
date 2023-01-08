@@ -70,8 +70,15 @@ ScopedAStatus RadioVoice::acceptCall(int32_t serial) {
 }
 
 ScopedAStatus RadioVoice::cancelPendingUssd(int32_t serial) {
-    LOG_UNIMPLEMENTED << serial;
-    mResponse->cancelPendingUssdResponse(notSupported(serial));
+    LOG_CALL << serial;
+    if (!mModemUssd) {
+        mResponse->cancelPendingUssdResponse(error(serial, RadioError::SIM_ABSENT));
+        return ok();
+    }
+
+    mModemUssd->cancelSession();
+    mResponse->cancelPendingUssdResponse(okay(serial));
+
     return ok();
 }
 
@@ -330,8 +337,14 @@ ScopedAStatus RadioVoice::sendDtmf(int32_t serial, const std::string& s) {
 }
 
 ScopedAStatus RadioVoice::sendUssd(int32_t serial, const std::string& ussd) {
-    LOG_STUB << serial << ": " << ussd;
-    mResponse->sendUssdResponse(notSupported(serial));
+    LOG_CALL << serial << ": " << ussd;
+    if (!mModemUssd) {
+        mResponse->sendUssdResponse(error(serial, RadioError::SIM_ABSENT));
+        return ok();
+    }
+
+    mModemUssd->sendUssd(ussd);
+    mResponse->sendUssdResponse(okay(serial));
     return ok();
 }
 
@@ -430,6 +443,29 @@ ScopedAStatus RadioVoice::switchWaitingOrHoldingAndActive(int32_t serial) {
 void RadioVoice::callStateChanged() {
     LOG_CALL;
     if (mIndication) mIndication->callStateChanged(RadioIndicationType::UNSOLICITED);
+}
+
+void RadioVoice::ussdReceived(MMModem3gppUssdSessionState state, const std::string& message) {
+    aidl::UssdModeType mode{};
+    switch (state) {
+        case MM_MODEM_3GPP_USSD_SESSION_STATE_UNKNOWN:
+            mode = aidl::UssdModeType::LOCAL_CLIENT;
+            break;
+        case MM_MODEM_3GPP_USSD_SESSION_STATE_IDLE:
+            mode = aidl::UssdModeType::NOTIFY;
+            break;
+        case MM_MODEM_3GPP_USSD_SESSION_STATE_USER_RESPONSE:
+            mode = aidl::UssdModeType::REQUEST;
+            break;
+        case MM_MODEM_3GPP_USSD_SESSION_STATE_ACTIVE:
+            LOG(ERROR) << "USSD session is still active";
+            return;
+        default:
+            LOG(ERROR) << "Unknown USSD state: " << state;
+            return;
+    }
+
+    if (mIndication) mIndication->onUssd(RadioIndicationType::UNSOLICITED, mode, message);
 }
 
 }  // namespace android::hardware::radio::mm

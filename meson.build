@@ -20,6 +20,7 @@ srcs = [
     'src/mm/Modem.cpp',
     'src/mm/ModemManager.cpp',
     'src/mm/ModemVoice.cpp',
+    'src/mm/ModemUssd.cpp',
 ]
 
 cflags = ['-Wno-unused-parameter']

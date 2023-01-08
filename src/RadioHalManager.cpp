@@ -123,10 +123,14 @@ void RadioHalManager::handleNewModem(const std::shared_ptr<ModemObject>& mObj) {
     auto& fe = mFrontendElements[*slotId];
     fe.mRadioSim->bindModem(sim);
     auto& voice = mObj->getVoice();
-    fe.mRadioVoice->bindModem(voice);
+    auto& ussd = mObj->getUssd();
+    fe.mRadioVoice->bindModem(voice, ussd);
     fe.mRadioModem->bindModem(modem);
     voice->setNotifyFrontend([fe]() { fe.mRadioVoice->callStateChanged(); });
     modem->setModemStateChangedCb([fe](bool on) { fe.mRadioModem->radioStateChanged(on); });
+    ussd->setUssdReceivedCallback([fe](MMModem3gppUssdSessionState state, const std::string& ussd) {
+        fe.mRadioVoice->ussdReceived(state, ussd);
+    });
 
     mRadioConfig->simSlotStatusChanged();
     fe.mRadioModem->rilConnected();
@@ -149,7 +153,7 @@ void RadioHalManager::handleModemRemoved(const std::shared_ptr<ModemObject>& mOb
 
     auto& fe = mFrontendElements[slotId];
     fe.mRadioSim->bindModem({});
-    fe.mRadioVoice->bindModem({});
+    fe.mRadioVoice->bindModem({}, {});
     fe.mRadioModem->bindModem({});
     mSlotIdToModemObjectMap.erase(slotId);
 
