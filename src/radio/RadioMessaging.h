@@ -21,6 +21,8 @@
 
 #include <aidl/android/hardware/radio/messaging/BnRadioMessaging.h>
 
+#include "mm/ModemMessaging.h"
+
 namespace android::hardware::radio::mm {
 
 class RadioMessaging : public aidl::android::hardware::radio::messaging::BnRadioMessaging {
@@ -85,7 +87,12 @@ class RadioMessaging : public aidl::android::hardware::radio::messaging::BnRadio
     std::shared_ptr<::aidl::android::hardware::radio::messaging::IRadioMessagingIndication>
             mIndication;
 
+    std::shared_ptr<ModemMessaging> mModemMessaging;
+
   public:
+    void bindModem(std::shared_ptr<ModemMessaging> modemMessaging) {
+        mModemMessaging = std::move(modemMessaging);
+    }
 };
 
 }  // namespace android::hardware::radio::mm
