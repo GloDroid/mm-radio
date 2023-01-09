@@ -18,11 +18,11 @@ CXXARGS := $(subst [BASE_DIR],$(BASE_DIR),$(CXXARGS))
 CXXARGS := $(patsubst -mcpu=%,,$(CXXARGS))
 # TODO: build aospless with gtest enabled and remove line below
 CXXARGS := $(subst -nostdlibinc,,$(CXXARGS))
-CXXARGS += -I. -I./tests/test_include $(CXXFLAGS)
+CXXARGS += -Isrc -I./tests/test_include $(CXXFLAGS)
 
 TIDY_FILES_OVERRIDE := \
-    src/RadioNetwork.cpp:COARSE \
-    src/RadioSim.cpp:COARSE \
+    src/radio/RadioNetwork.cpp:COARSE \
+    src/radio/RadioSim.cpp:COARSE \
 
 TIDY_CHECKS_FINE := *                                   \
     -llvmlibc* -fuchsia-* -altera-*                     \
