@@ -23,13 +23,13 @@
 #include "mm/Modem.h"
 #include "mm/ModemManager.h"
 
-#include "RadioConfig.h"
-#include "RadioData.h"
-#include "RadioMessaging.h"
-#include "RadioModem.h"
-#include "RadioNetwork.h"
-#include "RadioSim.h"
-#include "RadioVoice.h"
+#include "radio/RadioConfig.h"
+#include "radio/RadioData.h"
+#include "radio/RadioMessaging.h"
+#include "radio/RadioModem.h"
+#include "radio/RadioNetwork.h"
+#include "radio/RadioSim.h"
+#include "radio/RadioVoice.h"
 
 #include <map>
 #include <memory>

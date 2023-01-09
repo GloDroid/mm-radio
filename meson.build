@@ -7,23 +7,11 @@ project(
   default_options : ['buildtype=debugoptimized', 'b_ndebug=if-release', 'c_std=c11', 'cpp_std=c++17', 'cpp_rtti=false']
 )
 
-srcs = [
-    'src/RadioConfig.cpp',
-    'src/RadioData.cpp',
-    'src/RadioMessaging.cpp',
-    'src/RadioModem.cpp',
-    'src/RadioNetwork.cpp',
-    'src/RadioSim.cpp',
-    'src/RadioVoice.cpp',
-    'src/service.cpp',
-    'src/RadioHalManager.cpp',
-    'src/mm/Modem.cpp',
-    'src/mm/ModemManager.cpp',
-    'src/mm/ModemVoice.cpp',
-    'src/mm/ModemUssd.cpp',
-]
+include_dirs = [include_directories('src/')]
 
-cflags = ['-Wno-unused-parameter']
+srcs = []
+
+subdir('src')
 
 deps = [
     dependency('android_base'),
@@ -51,6 +39,7 @@ executable(
     dependencies : deps,
     install : true,
     install_dir : get_option('bindir') / 'hw',
+    include_directories: include_dirs,
 )
 
 configure_file(
