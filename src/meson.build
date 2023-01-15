@@ -5,3 +5,4 @@ srcs += files(
 
 subdir('mm')
 subdir('radio')
+subdir('utils')

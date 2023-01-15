@@ -44,14 +44,16 @@ shell: ## Start shell into a container
 ci_fast: $(PREPARE)
 ci_fast: ## Run meson build for arm64 in docker container
 	@echo "Run meson cross-build for Android:"
-	$(DOCKER_BIN) exec -it $(IMAGE_NAME) bash -c "make -C ~/aospless all"
+	$(DOCKER_BIN) exec -it $(IMAGE_NAME) bash -c "make -C ~/aospless install"
 
 ci: $(PREPARE)
 ci: ## Run presubmit within the docker container
-	@echo "Run native build:"
-	$(DOCKER_BIN) exec -it $(IMAGE_NAME) bash -c "make -f .ci/Makefile -j$(NPROCS)"
+	@echo "Run rust checks:"
+	$(DOCKER_BIN) exec -it $(IMAGE_NAME) bash -c "export RUSTFLAGS=\"-D warnings\" && cargo check && cargo test && cargo fmt --check"
 	@echo "Run meson cross-build for Android:"
-	$(DOCKER_BIN) exec -it $(IMAGE_NAME) bash -c "make -C ~/aospless all"
+	$(DOCKER_BIN) exec -it $(IMAGE_NAME) bash -c "make -C ~/aospless install"
+	@echo "Run native build and clang-tidy:"
+	$(DOCKER_BIN) exec -it $(IMAGE_NAME) bash -c "make -f .ci/Makefile -j$(NPROCS)"
 	@echo "Run style check:"
 	$(if $(GIT_IS_SYMLINK), \
 		./.ci/.gitlab-ci-checkcommit.sh, \
@@ -69,7 +71,7 @@ build_deploy: ## Build for Andoid and deploy onto the target device (require act
 	$(if $(filter $(shell adb shell getprop ro.bionic.arch),arm64),,$(error arm64 only is supported at the moment))
 	adb root && adb remount vendor
 	mkdir -p .out/arm64
-	$(DOCKER_BIN) exec -it $(IMAGE_NAME) bash -c "make -C ~/aospless all"
+	$(DOCKER_BIN) exec -it $(IMAGE_NAME) bash -c "make -C ~/aospless install"
 	$(DOCKER_BIN) exec -it $(IMAGE_NAME) bash -c "cp -r ~/aospless/install/* ~/mm-radio/.out/arm64"
 	adb push .out/arm64/vendor/bin/hw/android.hardware.mm-radio-service /vendor/bin/hw/android.hardware.mm-radio-service
 	adb shell stop vendor.radio-hal

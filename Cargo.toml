@@ -1,0 +1,13 @@
+# mm-radio is built using meson.build, this cargo file is used only for IDE to setup rust-analyser
+
+[package]
+name = "rust-mm"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "libutils"
+path = "src/utils/utils.rs"
+test = true
+edition = "2021"
+crate-type = ["lib"]

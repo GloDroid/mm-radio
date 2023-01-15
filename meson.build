@@ -1,10 +1,10 @@
 project(
   'mm-radio',
-  ['c', 'cpp'],
+  ['c', 'cpp', 'rust'],
   version : '',
   license : 'APACHE-2.0',
   meson_version : '>= 0.56',
-  default_options : ['buildtype=debugoptimized', 'b_ndebug=if-release', 'c_std=c11', 'cpp_std=c++17', 'cpp_rtti=false']
+  default_options : ['buildtype=debugoptimized', 'b_ndebug=if-release', 'c_std=c11', 'cpp_std=c++17', 'cpp_rtti=false', 'rust_std=2021']
 )
 
 include_dirs = [include_directories('src/')]
@@ -40,6 +40,7 @@ executable(
     install : true,
     install_dir : get_option('bindir') / 'hw',
     include_directories: include_dirs,
+    link_with: [libutils],
 )
 
 configure_file(
