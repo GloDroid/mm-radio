@@ -20,6 +20,7 @@
 
 #include "MmRaii.h"
 #include "Modem.h"
+#include "ModemMessaging.h"
 #include "ModemUssd.h"
 #include "ModemVoice.h"
 
@@ -31,6 +32,7 @@ class ModemObject {
         modemInstance->mModem = Modem::createInstance(mmObject);
         modemInstance->mModemVoice = ModemVoice::createInstance(mmObject);
         modemInstance->mModemUssd = ModemUssd::createInstance(mmObject);
+        modemInstance->mModemMessaging = ModemMessaging::createInstance(mmObject);
 
         modemInstance->mModemPath = mm_object_get_path(mmObject.get());
 
@@ -45,6 +47,7 @@ class ModemObject {
     auto& getModem() { return mModem; }
     auto& getVoice() { return mModemVoice; }
     auto& getUssd() { return mModemUssd; }
+    auto& getMessaging() { return mModemMessaging; }
 
   private:
     explicit ModemObject(SharedMmObject& mmObject) : mMmObject(mmObject) {}
@@ -56,4 +59,5 @@ class ModemObject {
     std::shared_ptr<Modem> mModem;
     std::shared_ptr<ModemVoice> mModemVoice;
     std::shared_ptr<ModemUssd> mModemUssd;
+    std::shared_ptr<ModemMessaging> mModemMessaging;
 };

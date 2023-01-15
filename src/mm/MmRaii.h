@@ -60,3 +60,12 @@ inline auto makeSharedGdbusObject(GDBusObject* object) {
 inline auto makeSharedMmObject(MMObject* object) {
     return SharedGObject<MMObject>(object, GObjectDeleter<MMObject>());
 }
+
+inline int pathToIndex(const std::string& path) {
+    auto pos = path.find_last_of('/');
+    if (pos == std::string::npos) {
+        return -1;
+    }
+
+    return std::stoi(path.substr(pos + 1));
+}

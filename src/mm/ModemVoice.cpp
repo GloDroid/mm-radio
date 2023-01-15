@@ -109,7 +109,7 @@ void ModemCall::dump() {
 }
 
 ModemCall::~ModemCall() {
-    g_signal_handlers_disconnect_by_func(mMmCall.get(), (void*)stateChangedCallback, this);
+    g_signal_handlers_disconnect_by_data(mMmCall.get(), this);
 }
 
 void ModemCall::setNotifyFrontend(std::function<void()> notifyFrontend) {
@@ -193,21 +193,11 @@ auto ModemVoice::getCallByState(MMCallState state) -> std::shared_ptr<ModemCall>
 }
 
 ModemVoice::~ModemVoice() {
-    g_signal_handlers_disconnect_by_func(mMmModemVoice.get(), (gpointer)callAddedCallback, this);
-    g_signal_handlers_disconnect_by_func(mMmModemVoice.get(), (gpointer)callDeletedCallback, this);
+    g_signal_handlers_disconnect_by_data(mMmModemVoice.get(), this);
 }
 
 void ModemVoice::setNotifyFrontend(std::function<void()> notifyFrontend) {
     mNotifyFrontend = std::move(notifyFrontend);
-}
-
-int ModemVoice::pathToIndex(const std::string& path) {
-    auto pos = path.find_last_of('/');
-    if (pos == std::string::npos) {
-        return -1;
-    }
-
-    return std::stoi(path.substr(pos + 1));
 }
 
 void ModemVoice::queryCalls() {

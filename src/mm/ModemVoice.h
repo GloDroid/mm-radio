@@ -83,7 +83,6 @@ class ModemVoice {
 
     std::function<void()> mNotifyFrontend;
 
-    static int pathToIndex(const std::string& path);
     void queryCalls();
 
     int addCall(const gchar* path);

@@ -20,11 +20,17 @@
 #include "RadioMessaging.h"
 
 #include "debug.h"
+#include "utils/sms_deliver.h"
+#include "utils/sms_submit.h"
+
+#include <libmm-glib.h>
 
 #define RADIO_MODULE "Messaging"
 
 namespace android::hardware::radio::mm {
 
+using ::aidl::android::hardware::radio::RadioIndicationType;
+using ::aidl::android::hardware::radio::messaging::SendSmsResult;
 using ::ndk::ScopedAStatus;
 namespace aidl = ::aidl::android::hardware::radio::messaging;
 constexpr auto ok = &ScopedAStatus::ok;
@@ -45,8 +51,20 @@ ScopedAStatus RadioMessaging::acknowledgeLastIncomingCdmaSms(  //
 
 ScopedAStatus RadioMessaging::acknowledgeLastIncomingGsmSms(  //
         int32_t serial, bool success, aidl::SmsAcknowledgeFailCause /*cause*/) {
-    LOG_UNIMPLEMENTED << serial << ' ' << success;
-    mResponse->acknowledgeLastIncomingGsmSmsResponse(notSupported(serial));
+    LOG_CALL << serial << ' ' << success;
+
+    auto lock = std::unique_lock(mIncomingSmsListMutex);
+
+    if (!mIncomingSmsList.empty()) {
+        auto acceptedSms = mIncomingSmsList.front();
+        mIncomingSmsList.pop_front();
+        // Delete accepted SMS from modem
+        if (mModemMessaging) mModemMessaging->deleteSms(acceptedSms->getIndex());
+
+        reportNextIncomingSmsLocked();
+    }
+
+    mResponse->acknowledgeLastIncomingGsmSmsResponse(okay(serial));
     return ok();
 }
 
@@ -111,8 +129,46 @@ ScopedAStatus RadioMessaging::sendImsSms(int32_t serial, const aidl::ImsSmsMessa
 }
 
 ScopedAStatus RadioMessaging::sendSms(int32_t serial, const aidl::GsmSmsMessage& message) {
-    LOG_STUB << serial << ": " << message.toString();
-    mResponse->sendSmsResponse(notSupported(serial), {});
+    LOG_CALL << serial << ": " << message.toString();
+
+    if (!mModemMessaging) {
+        LOG(ERROR) << "ModemMessaging is not initialized";
+        mResponse->sendSmsResponse(error(serial, RadioError::SIM_ABSENT), {});
+        return ok();
+    }
+
+    LOG(INFO) << "Sending SMS to " << message.smscPdu << ": " << message.pdu;
+
+    auto sArgs = (DecodeSmsSubmitArgs){
+            .in_smsc_pdu = message.smscPdu,
+            .in_pdu = message.pdu,
+    };
+    auto res = smsSubmitDecode(sArgs);
+    if (res != 0) {
+        LOG(ERROR) << "Failed to decode SMS PDU: " << message.pdu;
+        mResponse->sendSmsResponse(error(serial, RadioError::INVALID_ARGUMENTS), {});
+        return ok();
+    }
+
+    auto smsc = sArgs.out_smsc;
+    auto dest = sArgs.out_destination;
+    auto text = sArgs.out_message;
+    LOG(INFO) << "Sending SMS to " << dest << ": " << text;
+
+    auto ret = mModemMessaging->sendSms(smsc, dest, text);
+    if (ret != 0) {
+        LOG(ERROR) << "Failed to send SMS: " << ret;
+        mResponse->sendSmsResponse(error(serial, RadioError::INVALID_ARGUMENTS), {});
+        return ok();
+    }
+
+    auto sendSmsResult = (SendSmsResult){
+            .messageRef = mOutgoingSmsIndex++,
+            .ackPDU = "",
+            .errorCode = -1,
+    };
+
+    mResponse->sendSmsResponse(okay(serial), sendSmsResult);
     return ok();
 }
 
@@ -157,6 +213,8 @@ ScopedAStatus RadioMessaging::setResponseFunctions(
     mResponse = response;
     mIndication = indication;
 
+    if (mModemMessaging) mModemMessaging->queryMessages();
+
     return ok();
 }
 
@@ -178,6 +236,47 @@ ScopedAStatus RadioMessaging::writeSmsToSim(int32_t serial,
     LOG_UNIMPLEMENTED << serial;
     mResponse->writeSmsToSimResponse(notSupported(serial), {});
     return ok();
+}
+
+// Internal Interfaces
+
+void RadioMessaging::smsReceived(const std::shared_ptr<ModemSms>& sms) {
+    LOG_CALL;
+
+    auto lock = std::unique_lock(mIncomingSmsListMutex);
+
+    mIncomingSmsList.push_back(sms);
+    if (mIncomingSmsList.size() == 1) {
+        reportNextIncomingSmsLocked();
+    }
+}
+
+void RadioMessaging::reportNextIncomingSmsLocked() {
+    LOG_CALL;
+
+    if (mIncomingSmsList.empty()) {
+        return;
+    }
+
+    auto sms = mIncomingSmsList.front();
+
+    auto address = sms->getNumber();
+    auto text = sms->getText();
+    auto ts = sms->getTimestamp();
+    LOG_CALL << address << ": " << text << " (" << ts << ")";
+
+    auto pdu = smsDeliverEncode(address, text, ts);
+
+    LOG(INFO) << "PDU: " << pdu;
+
+    auto fullpdu = "00" + pdu;
+    std::vector<uint8_t> pduBytes;
+    for (size_t i = 0; i < fullpdu.length(); i += 2) {
+        auto byte = fullpdu.substr(i, 2);
+        constexpr auto kBase = 16;
+        pduBytes.push_back(std::stoi(byte, nullptr, kBase));
+    }
+    mIndication->newSms(RadioIndicationType::UNSOLICITED, pduBytes);
 }
 
 }  // namespace android::hardware::radio::mm

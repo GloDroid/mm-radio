@@ -91,7 +91,7 @@ void ModemUssd::commonCallback(gchar* response, bool success) {
     /* internal state that mean responce error */
     auto state = MM_MODEM_3GPP_USSD_SESSION_STATE_UNKNOWN;
 
-    ALOGD("USSD response: %s", response);
+    RLOGD("USSD response: %s", response);
     mResponseStr = (response != nullptr) ? response : "";
 
     if (!success) {
