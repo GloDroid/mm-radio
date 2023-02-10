@@ -107,6 +107,7 @@ fn sms_submit_decode(in_pdu: &str) -> Option<(String /*number*/, String /*text*/
         let len = div_round_up(tp_udl * 7, 8) * 2;
         let tp_user_data = &pdu[..len];
         message = gsm7_pdu_to_string(tp_user_data).unwrap();
+        message = message[..tp_udl].to_string();
         pdu = &pdu[len..];
     } else if encoding_is_ucs2 {
         for _ in 0..tp_udl / 2 {
@@ -150,5 +151,10 @@ mod tests {
         let (destination, message) = sms_submit_decode("0100038146F3000003D3F61C").unwrap();
         assert_eq!(destination, "643");
         assert_eq!(message, "Sms");
+
+        let (destination, message) =
+            sms_submit_decode("01000A812143658709000007C434393D469701").unwrap();
+        assert_eq!(destination, "1234567890");
+        assert_eq!(message, "Didiche");
     }
 }
