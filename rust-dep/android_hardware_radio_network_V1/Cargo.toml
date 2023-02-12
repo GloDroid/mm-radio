@@ -1,0 +1,11 @@
+[package]
+name = "android_hardware_radio_network"
+version = "0.1.0"
+rust-version = "1.60"
+edition = "2018"
+
+[dependencies]
+binder = { path = "../binder" }
+lazy_static = "1.4.0"
+async-trait = "0.1.63"
+android_hardware_radio = { path = "../android_hardware_radio_V1" }

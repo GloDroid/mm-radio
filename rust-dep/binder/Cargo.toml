@@ -1,0 +1,21 @@
+# Cargo.toml
+
+# Multiplatform binding library for the binder IPC mechanism
+
+# arm64 code is located in arm64 directory
+
+# declare the library
+
+[package]
+name = "binder"
+version = "0.1.0"
+rust-version = "1.60"
+edition = "2018"
+
+[dependencies]
+binder_ndk_sys = { path = "../binder_ndk_sys" }
+libc = "0.2.0"
+
+# declare the alias downcast_rs for downcast
+
+downcast-rs = "1.2.0"

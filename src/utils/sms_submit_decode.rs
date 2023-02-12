@@ -42,7 +42,7 @@ use crate::pdu_helpers::address::address_from_pdu;
 use crate::pdu_helpers::div_round_up;
 use crate::pdu_helpers::gsm7::gsm7_pdu_to_string;
 
-fn sms_submit_decode(in_pdu: &str) -> Option<(String /*number*/, String /*text*/)> {
+pub(crate) fn sms_submit_decode(in_pdu: &str) -> Option<(String /*number*/, String /*text*/)> {
     let mut pdu = in_pdu;
     let mut message = String::new();
 

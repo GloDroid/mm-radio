@@ -30,7 +30,7 @@ pub extern "C" fn sms_deliver_encode_c(
     0
 }
 
-fn sms_deliver_encode(address: &str, text: &str, timestamp: &str) -> String {
+pub(crate) fn sms_deliver_encode(address: &str, text: &str, timestamp: &str) -> String {
     let text_len = text.chars().count();
 
     let mut pdu = String::new();

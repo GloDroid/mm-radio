@@ -7,7 +7,7 @@ edition = "2021"
 
 [lib]
 name = "libutils"
-path = "src/utils/utils.rs"
+path = "src/utils/mod.rs"
 test = true
 edition = "2021"
 crate-type = ["lib"]
