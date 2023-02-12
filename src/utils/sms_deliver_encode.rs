@@ -27,7 +27,7 @@ pub extern "C" fn sms_deliver_encode_c(
         *out_pdu = pdu.into_raw();
     }
 
-    return 0;
+    0
 }
 
 fn sms_deliver_encode(address: &str, text: &str, timestamp: &str) -> String {

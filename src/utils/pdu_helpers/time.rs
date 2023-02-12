@@ -10,22 +10,14 @@ pub(crate) struct Timestamp {
 
 impl Timestamp {
     pub(crate) fn from_mm_format(timestamp: &str) -> Timestamp {
-        let year = u16::from_str_radix(&timestamp[0..4], 10).unwrap();
-        let month = u8::from_str_radix(&timestamp[5..7], 10).unwrap();
-        let day = u8::from_str_radix(&timestamp[8..10], 10).unwrap();
-        let hour = u8::from_str_radix(&timestamp[11..13], 10).unwrap();
-        let minute = u8::from_str_radix(&timestamp[14..16], 10).unwrap();
-        let second = u8::from_str_radix(&timestamp[17..19], 10).unwrap();
-        let tz = i8::from_str_radix(&timestamp[20..22], 10).unwrap();
-        Timestamp {
-            year,
-            month,
-            day,
-            hour,
-            minute,
-            second,
-            tz,
-        }
+        let year = timestamp[0..4].parse::<u16>().unwrap();
+        let month = timestamp[5..7].parse::<u8>().unwrap();
+        let day = timestamp[8..10].parse::<u8>().unwrap();
+        let hour = timestamp[11..13].parse::<u8>().unwrap();
+        let minute = timestamp[14..16].parse::<u8>().unwrap();
+        let second = timestamp[17..19].parse::<u8>().unwrap();
+        let tz = timestamp[20..22].parse::<i8>().unwrap();
+        Timestamp { year, month, day, hour, minute, second, tz }
     }
 
     pub(crate) fn to_pdu(&self) -> String {

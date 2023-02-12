@@ -4,7 +4,7 @@ pub(crate) fn gsm7_pdu_from_string(utf: &str) -> Result<String, Gsm7Error> {
     let vec = gsm7_from_string(utf)?;
     let mut result = String::new();
     for byte in vec {
-        result.push_str(&format!("{:02X}", byte));
+        result.push_str(&format!("{byte:02X}"));
     }
     Ok(result)
 }
@@ -48,13 +48,13 @@ fn gsm7_to_string(gsm7: &[u8]) -> Result<String, Gsm7Error> {
         if bit_start > gsm7.len() * 8 - 7 {
             break;
         }
-        let septet = septet_read(bit_start, &gsm7);
+        let septet = septet_read(bit_start, gsm7);
         bit_start += 7;
         if septet == GSM7_ESC {
             if bit_start > gsm7.len() * 8 - 7 {
                 return Err(Gsm7Error::UnexpectedEndOfData);
             }
-            let septet = septet_read(bit_start, &gsm7);
+            let septet = septet_read(bit_start, gsm7);
             bit_start += 7;
             match septet {
                 0x0A => result.push('\x0C'),
@@ -69,12 +69,10 @@ fn gsm7_to_string(gsm7: &[u8]) -> Result<String, Gsm7Error> {
                 0x65 => result.push('€'),
                 _ => return Err(Gsm7Error::InvalidEscapeSequence(septet)),
             }
+        } else if let Some(c) = GSM7_CHARSET.get(septet as usize) {
+            result.push(*c);
         } else {
-            if let Some(c) = GSM7_CHARSET.get(septet as usize) {
-                result.push(*c);
-            } else {
-                return Err(Gsm7Error::InvalidData);
-            }
+            return Err(Gsm7Error::InvalidData);
         }
     }
     Ok(result)
@@ -111,7 +109,7 @@ fn septet_read(bit_start: usize, bytes: &[u8]) -> u8 {
     let byte = bytes[byte_start];
     let bits = if bit_start_in_byte > 1 {
         let bits1 = byte >> bit_start_in_byte;
-        let bits2 = bytes[byte_start + 1] << 8 - bit_start_in_byte;
+        let bits2 = bytes[byte_start + 1] << (8 - bit_start_in_byte);
         bits1 | bits2
     } else {
         byte >> bit_start_in_byte
@@ -119,26 +117,26 @@ fn septet_read(bit_start: usize, bytes: &[u8]) -> u8 {
     bits & 0b01111111
 }
 
-fn septet_write(bit_start: usize, bytes: &mut Vec<u8>, septet: u8) {
+fn septet_write(bit_start: usize, bytes: &mut [u8], septet: u8) {
     let byte_start = bit_start / 8;
     let bit_start_in_byte = bit_start % 8;
     if bit_start_in_byte > 1 {
         bytes[byte_start] &= !(0b01111111 << bit_start_in_byte);
-        bytes[byte_start + 1] &= !(0b01111111 >> 8 - bit_start_in_byte);
+        bytes[byte_start + 1] &= !(0b01111111 >> (8 - bit_start_in_byte));
         bytes[byte_start] |= septet << bit_start_in_byte;
-        bytes[byte_start + 1] |= septet >> 8 - bit_start_in_byte;
+        bytes[byte_start + 1] |= septet >> (8 - bit_start_in_byte);
     } else {
         bytes[byte_start] &= !(0b01111111 << bit_start_in_byte);
         bytes[byte_start] |= septet << bit_start_in_byte;
     }
 }
 
-fn septet_write_with_inc(bit_start: &mut usize, bytes: &mut Vec<u8>, septet: u8) {
+fn septet_write_with_inc(bit_start: &mut usize, bytes: &mut [u8], septet: u8) {
     septet_write(*bit_start, bytes, septet);
     *bit_start += 7;
 }
 
-fn septet_write_esc_with_inc(bit_start: &mut usize, bytes: &mut Vec<u8>, septet: u8) {
+fn septet_write_esc_with_inc(bit_start: &mut usize, bytes: &mut [u8], septet: u8) {
     septet_write_with_inc(bit_start, bytes, GSM7_ESC);
     septet_write_with_inc(bit_start, bytes, septet);
 }
@@ -178,10 +176,7 @@ mod tests {
             assert_eq!(gsm7_pdu_to_string(hexstring).unwrap(), *utf8);
         }
 
-        assert_eq!(
-            gsm7_pdu_to_string("1B1B").unwrap_err(),
-            Gsm7Error::InvalidEscapeSequence(54)
-        );
+        assert_eq!(gsm7_pdu_to_string("1B1B").unwrap_err(), Gsm7Error::InvalidEscapeSequence(54));
     }
 
     #[test]
@@ -191,9 +186,6 @@ mod tests {
         }
 
         let utf8 = "Привіт, світ!";
-        assert_eq!(
-            gsm7_pdu_from_string(utf8).unwrap_err(),
-            Gsm7Error::InvalidEscapeSequence(31)
-        );
+        assert_eq!(gsm7_pdu_from_string(utf8).unwrap_err(), Gsm7Error::InvalidEscapeSequence(31));
     }
 }

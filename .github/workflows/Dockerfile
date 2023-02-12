@@ -30,7 +30,7 @@ CMD cd /github/workspace && \
     rustup target add aarch64-linux-android && \
     git config --global --add safe.directory /github/workspace && \
     git config --global -l && \
-    export RUSTFLAGS="-D warnings" && cargo check && cargo test && cargo fmt --check && \
+    export RUSTFLAGS="-D warnings" && cargo check && cargo test && cargo fmt --check && cargo clippy && \
     make -C ../aospless install && \
     .ci/.gitlab-ci-checkcommit.sh && \
     make -f .ci/Makefile -j$(nproc) && \

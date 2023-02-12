@@ -49,7 +49,7 @@ ci_fast: ## Run meson build for arm64 in docker container
 ci: $(PREPARE)
 ci: ## Run presubmit within the docker container
 	@echo "Run rust checks:"
-	$(DOCKER_BIN) exec -it $(IMAGE_NAME) bash -c "export RUSTFLAGS=\"-D warnings\" && cargo check && cargo test && cargo fmt --check"
+	$(DOCKER_BIN) exec -it $(IMAGE_NAME) bash -c "export RUSTFLAGS=\"-D warnings\" && cargo check && cargo test && cargo fmt --check && cargo clippy"
 	@echo "Run meson cross-build for Android:"
 	$(DOCKER_BIN) exec -it $(IMAGE_NAME) bash -c "make -C ~/aospless install"
 	@echo "Run native build and clang-tidy:"

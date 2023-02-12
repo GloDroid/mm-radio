@@ -15,7 +15,7 @@ pub extern "C" fn sms_submit_decode_c(
     let pdu = unsafe { CStr::from_ptr(pdu) }.to_str().unwrap();
     let (destination, message) = sms_submit_decode(pdu).unwrap();
 
-    let smsc = if smsc_pdu.len() != 0 {
+    let smsc = if !smsc_pdu.is_empty() {
         address_from_pdu(smsc_pdu, true).unwrap().0
     } else {
         String::new()
@@ -31,7 +31,7 @@ pub extern "C" fn sms_submit_decode_c(
         *out_message = message.into_raw();
     }
 
-    return 0;
+    0
 }
 
 // Ref: http://www.sendsms.cn/download/SMS_PDU-mode.PDF
@@ -74,7 +74,7 @@ fn sms_submit_decode(in_pdu: &str) -> Option<(String /*number*/, String /*text*/
 
     pdu = &pdu[2..];
     // TP_DA
-    let addr = address_from_pdu(&pdu, false).unwrap();
+    let addr = address_from_pdu(pdu, false).unwrap();
     // first byte is length of address
     let destination = addr.0;
     pdu = &pdu[addr.1..];
@@ -112,10 +112,7 @@ fn sms_submit_decode(in_pdu: &str) -> Option<(String /*number*/, String /*text*/
     } else if encoding_is_ucs2 {
         for _ in 0..tp_udl / 2 {
             let ucs2_u16 = u16::from_str_radix(&pdu[..4], 16).unwrap();
-            let ucs2_char = char::decode_utf16([ucs2_u16].iter().cloned())
-                .next()
-                .unwrap()
-                .unwrap();
+            let ucs2_char = char::decode_utf16([ucs2_u16].iter().cloned()).next().unwrap().unwrap();
             message.push(ucs2_char);
             pdu = &pdu[4..];
         }
