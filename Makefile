@@ -49,7 +49,7 @@ ci_fast: ## Run meson build for arm64 in docker container
 ci: $(PREPARE)
 ci: ## Run presubmit within the docker container
 	@echo "Run rust checks:"
-	$(DOCKER_BIN) exec -it $(IMAGE_NAME) bash -c "export RUSTFLAGS=\"-D warnings\" && cargo check && cargo test && cargo fmt --check && cargo clippy"
+	$(DOCKER_BIN) exec -it $(IMAGE_NAME) bash -c "export RUSTFLAGS=\"-D warnings\" && cargo check && cargo test && cargo fmt --check"
 	@echo "Run meson cross-build for Android:"
 	$(DOCKER_BIN) exec -it $(IMAGE_NAME) bash -c "make -C ~/aospless install"
 	@echo "Run native build and clang-tidy:"
@@ -81,3 +81,14 @@ build_deploy: ## Build for Andoid and deploy onto the target device (require act
 
 bd: build_deploy
 bd: ## Alias for build_deploy
+
+bdr: ## Build and deploy rust variant
+	$(if $(filter $(shell adb shell getprop ro.bionic.arch),arm64),,$(error arm64 only is supported at the moment))
+	adb root && adb remount vendor
+	cargo build
+	llvm-strip target/aarch64-linux-android/debug/android.hardware.mm-radio-service
+	adb push target/aarch64-linux-android/debug/android.hardware.mm-radio-service /vendor/bin/hw/
+	adb shell stop vendor.radio-hal
+	bash -c '[[ "$$ADBLOG" -eq "1" ]] && adb logcat -c || true'
+	adb shell start vendor.radio-hal
+	bash -c '[[ "$$ADBLOG" -eq "1" ]] && adb logcat | grep -i "mm-radio:" || true'

@@ -1,13 +1,33 @@
 # mm-radio is built using meson.build, this cargo file is used only for IDE to setup rust-analyser
+cargo-features = ["different-binary-name"]
 
 [package]
-name = "rust-mm"
+name = "mm-radio-service"
 version = "0.1.0"
 edition = "2021"
 
-[lib]
-name = "libutils"
-path = "src/utils/mod.rs"
+[[bin]]
+name = "mm-radio-service"
+filename = "android.hardware.mm-radio-service"
 test = true
 edition = "2021"
-crate-type = ["lib"]
+
+[dependencies]
+async-std = "1.12.0"
+futures = "0.3"
+
+zbus = "3.9.0"
+android_logger = "0.13.0"
+log = "0.4.17"
+
+binder = { path = "rust-dep/binder" }
+binder_ndk_sys = { path = "rust-dep/binder_ndk_sys" }
+
+android_hardware_radio = { path = "rust-dep/android_hardware_radio_V1" }
+android_hardware_radio_config = { path = "rust-dep/android_hardware_radio_config_V1" }
+android_hardware_radio_data = { path = "rust-dep/android_hardware_radio_data_V1" }
+android_hardware_radio_messaging = { path = "rust-dep/android_hardware_radio_messaging_V1" }
+android_hardware_radio_modem = { path = "rust-dep/android_hardware_radio_modem_V1" }
+android_hardware_radio_network = { path = "rust-dep/android_hardware_radio_network_V1" }
+android_hardware_radio_sim = { path = "rust-dep/android_hardware_radio_sim_V1" }
+android_hardware_radio_voice = { path = "rust-dep/android_hardware_radio_voice_V1" }

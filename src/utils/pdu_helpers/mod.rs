@@ -1,3 +1,10 @@
+/*
+ * mm-radio HAL (https://github.com/GloDroid/mm-radio)
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ * Copyright (C) 2023 The GloDroid Project
+ */
+
 pub mod address;
 pub mod gsm7;
 pub mod time;

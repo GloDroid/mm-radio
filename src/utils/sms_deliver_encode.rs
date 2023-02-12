@@ -1,7 +1,14 @@
+/*
+ * mm-radio HAL (https://github.com/GloDroid/mm-radio)
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ * Copyright (C) 2023 The GloDroid Project
+ */
+
 // Ref: http://www.sendsms.cn/download/SMS_PDU-mode.PDF
 
-use crate::pdu_helpers::address::address_to_pdu;
-use crate::pdu_helpers::time::Timestamp;
+use crate::utils::pdu_helpers::address::address_to_pdu;
+use crate::utils::pdu_helpers::time::Timestamp;
 
 use std::ffi::{CStr, CString};
 use std::os::raw::{c_char, c_int};

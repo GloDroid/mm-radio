@@ -1,5 +1,12 @@
+/*
+ * mm-radio HAL (https://github.com/GloDroid/mm-radio)
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ * Copyright (C) 2023 The GloDroid Project
+ */
+
 use super::{align, div_round_up};
-use crate::pdu_helpers::gsm7::{gsm7_pdu_from_string, gsm7_pdu_to_string};
+use crate::utils::pdu_helpers::gsm7::{gsm7_pdu_from_string, gsm7_pdu_to_string};
 use std::io;
 
 pub(crate) fn address_to_pdu(utf8: &str, is_smsc: bool) -> Result<String, io::Error> {

@@ -1,3 +1,10 @@
+/*
+ * mm-radio HAL (https://github.com/GloDroid/mm-radio)
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ * Copyright (C) 2023 The GloDroid Project
+ */
+
 use std::ffi::{c_int, CStr, CString};
 use std::os::raw::c_char;
 
@@ -38,9 +45,9 @@ pub extern "C" fn sms_submit_decode_c(
 // Ref: https://en.wikipedia.org/wiki/Concatenated_SMS
 // Ref: https://en.wikipedia.org/wiki/Short_Message_Peer-to-Peer
 
-use crate::pdu_helpers::address::address_from_pdu;
-use crate::pdu_helpers::div_round_up;
-use crate::pdu_helpers::gsm7::gsm7_pdu_to_string;
+use crate::utils::pdu_helpers::address::address_from_pdu;
+use crate::utils::pdu_helpers::div_round_up;
+use crate::utils::pdu_helpers::gsm7::gsm7_pdu_to_string;
 
 pub(crate) fn sms_submit_decode(in_pdu: &str) -> Option<(String /*number*/, String /*text*/)> {
     let mut pdu = in_pdu;

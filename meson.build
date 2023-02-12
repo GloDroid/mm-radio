@@ -12,6 +12,7 @@ include_dirs = [include_directories('src/')]
 srcs = []
 
 subdir('src')
+subdir('rust-dep')
 
 deps = [
     dependency('android_base'),

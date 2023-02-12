@@ -1,3 +1,10 @@
+/*
+ * mm-radio HAL (https://github.com/GloDroid/mm-radio)
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ * Copyright (C) 2023 The GloDroid Project
+ */
+
 use super::div_round_up;
 
 pub(crate) fn gsm7_pdu_from_string(utf: &str) -> Result<String, Gsm7Error> {
