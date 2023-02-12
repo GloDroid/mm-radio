@@ -5,42 +5,6 @@
  * Copyright (C) 2023 The GloDroid Project
  */
 
-use std::ffi::{c_int, CStr, CString};
-use std::os::raw::c_char;
-
-#[no_mangle]
-pub extern "C" fn sms_submit_decode_c(
-    smsc_pdu: *const c_char,
-    pdu: *const c_char,
-    out_smsc: *mut *mut c_char,
-    out_destination: *mut *mut c_char,
-    out_message: *mut *mut c_char,
-) -> c_int {
-    assert!(!smsc_pdu.is_null());
-    assert!(!pdu.is_null());
-    let smsc_pdu = unsafe { CStr::from_ptr(smsc_pdu) }.to_str().unwrap();
-    let pdu = unsafe { CStr::from_ptr(pdu) }.to_str().unwrap();
-    let (destination, message) = sms_submit_decode(pdu).unwrap();
-
-    let smsc = if !smsc_pdu.is_empty() {
-        address_from_pdu(smsc_pdu, true).unwrap().0
-    } else {
-        String::new()
-    };
-
-    let smsc = CString::new(smsc).unwrap();
-    let destination = CString::new(destination).unwrap();
-    let message = CString::new(message).unwrap();
-
-    unsafe {
-        *out_smsc = smsc.into_raw();
-        *out_destination = destination.into_raw();
-        *out_message = message.into_raw();
-    }
-
-    0
-}
-
 // Ref: http://www.sendsms.cn/download/SMS_PDU-mode.PDF
 // Ref: https://en.wikipedia.org/wiki/Concatenated_SMS
 // Ref: https://en.wikipedia.org/wiki/Short_Message_Peer-to-Peer

@@ -2,14 +2,6 @@
 
 set -e
 
-check_tool_installed() {
-	if ! command -v $1 &> /dev/null
-	then
-		echo "Please install '$1' tool"
-		exit 1
-	fi
-}
-
 echoerr() {
 	printf "ERROR: %s\n" "$*" >&2
 }
@@ -37,8 +29,6 @@ findtag() {
 	return 1
 }
 
-check_tool_installed clang-format-diff-15
-
 git fetch https://github.com/GloDroid/mm-radio.git
 
 git log --pretty='%h' FETCH_HEAD..HEAD | while read h; do
@@ -59,18 +49,6 @@ git log --pretty='%h' FETCH_HEAD..HEAD | while read h; do
 	committer=$(git show -s --format='%cn <%ce>' "$h")
 	if findtag "$commit_body" "Signed-off-by" "$committer"; then
 		echoerr "Committer SoB tag is missing from commit $h"
-		exit 1
-	fi
-
-	git show "$h" -- | clang-format-diff-15 -p 1 -style=file -regex=".*\\.(cpp|cc|c\+\+|cxx|c|cl|h|hh|hpp|m|mm|inc|js|ts|proto)" > /tmp/format-fixup.patch
-	if [ -s  /tmp/format-fixup.patch ]; then
-		cat /tmp/format-fixup.patch >&2
-		exit 1
-	fi
-
-	find -name "*.bp" -exec bpfmt -d -s {} \; > /tmp/bpfmt.patch
-	if [ -s  /tmp/bpfmt.patch ]; then
-		cat /tmp/bpfmt.patch >&2
 		exit 1
 	fi
 done

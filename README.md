@@ -19,9 +19,9 @@ It is designed to work on Android 13 and later versions. Older versions do not h
 
 ## The implementation details of mm-radio are as follows:
 
-- The `src/radio` directory contains the frontend code for the `IRadio` interface.
-- The `src/mm` directory contains C++ wrappers and helpers for the `libmm` library.
-- The `src/utils` directory contains various helpers, mostly written in Rust, to support the `mm` and `radio` API connectivity.
+- The `src/radio` directory contains the main binding logic between `IRadio` interface and MM dbus API.
+- The `src/mm_zbus` directory contains zbus auto-generated proxies for ModemManager dbus API.
+- The `src/utils` directory contains various helpers.
 
 ## Building mm-radio using AOSPLESS within a Docker container
 

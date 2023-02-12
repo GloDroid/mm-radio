@@ -10,33 +10,6 @@
 use crate::utils::pdu_helpers::address::address_to_pdu;
 use crate::utils::pdu_helpers::time::Timestamp;
 
-use std::ffi::{CStr, CString};
-use std::os::raw::{c_char, c_int};
-
-#[no_mangle]
-pub extern "C" fn sms_deliver_encode_c(
-    address: *const c_char,
-    text: *const c_char,
-    timestamp: *const c_char,
-    out_pdu: *mut *mut c_char,
-) -> c_int {
-    assert!(!address.is_null());
-    assert!(!text.is_null());
-    assert!(!timestamp.is_null());
-    let address = unsafe { CStr::from_ptr(address) }.to_str().unwrap();
-    let text = unsafe { CStr::from_ptr(text) }.to_str().unwrap();
-    let timestamp = unsafe { CStr::from_ptr(timestamp) }.to_str().unwrap();
-
-    let pdu = sms_deliver_encode(address, text, timestamp);
-    let pdu = CString::new(pdu).unwrap();
-
-    unsafe {
-        *out_pdu = pdu.into_raw();
-    }
-
-    0
-}
-
 pub(crate) fn sms_deliver_encode(address: &str, text: &str, timestamp: &str) -> String {
     let text_len = text.chars().count();
 

@@ -6,9 +6,7 @@ ENV PATH="/home/user/bin:${PATH}"
 
 # Taking into account layer structure, everything should be done within one layer.
 RUN apt-get update && apt-get upgrade -y && \
-    apt-get install -y clang-15 clang-tidy-15 clang-format-15 git libdrm-dev blueprint-tools libgtest-dev clang \
-    llvm make python3 python3-pip wget sudo rsync lld pkg-config ninja-build curl && \
-    pip3 install mako meson jinja2 ply pyyaml
+    apt-get install -y clang-15 clang git llvm make wget sudo rsync lld curl
 
 ENV RUN_USER user
 ENV RUN_UID 1000
@@ -39,13 +37,13 @@ USER ${RUN_USER}
 # install rustup
 RUN curl https://sh.rustup.rs -sSf | bash -s -- -y
 ENV PATH="${USER_HOME}/.cargo/bin:${PATH}"
-RUN rustup target add aarch64-linux-android
+RUN rustup default nightly && rustup target add aarch64-linux-android
 
 # Install aospless package (produced by GloDroid/aospext)
-RUN wget -P ${USER_HOME} https://github.com/GloDroid/mm-radio/files/10420551/aospless_mm_radio.tar.gz.zip && \
+RUN wget -P ${USER_HOME} https://github.com/GloDroid/mm-radio/files/10724455/aospless_mm_radio.tar.gz.zip && \
     cd ${USER_HOME} && mv aospless_mm_radio.tar.gz.zip aospless_mm_radio.tar.gz && \
     sha256sum aospless_mm_radio.tar.gz && \
-    (echo ada97e911501ea3a39fcb484b6f0fbfca1810a72d5850244fd8d42ffc9787994 aospless_mm_radio.tar.gz | sha256sum --check) && \
+    (echo a21d1992aea397b058eae95a27fed94efdeca06d978da7a83bfd96409f51e260 aospless_mm_radio.tar.gz | sha256sum --check) && \
     tar xf aospless_mm_radio.tar.gz && \
     ln -s ../mm-radio/ ${USER_HOME}/aospless/src
 
