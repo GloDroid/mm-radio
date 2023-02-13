@@ -1,0 +1,39 @@
+[dependencies.futures-channel]
+optional = true
+version = "0.3"
+
+[dependencies.futures-core]
+optional = true
+version = "0.3"
+
+[dependencies.js-sys]
+version = "0.3.31"
+
+[dependencies.wasm-bindgen]
+version = "0.2"
+[dev-dependencies.futures-util]
+version = "0.3"
+
+[dev-dependencies.wasm-bindgen-futures]
+version = "0.4.4"
+
+[dev-dependencies.wasm-bindgen-test]
+version = "0.3.4"
+
+[features]
+default = []
+futures = ["futures-core", "futures-channel"]
+
+[package]
+authors = ["Rust and WebAssembly Working Group"]
+categories = ["api-bindings", "asynchronous", "wasm"]
+description = "Convenience crate for working with JavaScript timers"
+edition = "2018"
+homepage = "https://github.com/rustwasm/gloo"
+license = "MIT/Apache-2.0"
+name = "gloo-timers"
+readme = "README.md"
+repository = "https://github.com/rustwasm/gloo/tree/master/crates/timers"
+version = "0.2.6"
+[package.metadata.docs.rs]
+features = ["futures"]

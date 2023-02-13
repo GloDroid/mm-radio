@@ -1,0 +1,20 @@
+[build-dependencies.cc]
+version = "1.0"
+
+[features]
+null-overlapped-wakeups-patch = []
+
+[package]
+authors = ["Philip Degarmo <aclysma@gmail.com>"]
+categories = ["external-ffi-bindings"]
+description = "Bindings for the wepoll library"
+edition = "2018"
+homepage = "https://github.com/aclysma/wepoll-ffi"
+keywords = ["wepoll"]
+license = "MIT OR Apache-2.0 OR BSD-2-Clause"
+name = "wepoll-ffi"
+readme = "README.md"
+repository = "https://github.com/aclysma/wepoll-ffi"
+version = "0.1.2"
+[package.metadata.docs.rs]
+targets = ["x86_64-pc-windows-msvc"]

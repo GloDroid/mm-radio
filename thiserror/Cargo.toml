@@ -1,0 +1,30 @@
+[dependencies.thiserror-impl]
+version = "=1.0.38"
+[dev-dependencies.anyhow]
+version = "1.0.65"
+
+[dev-dependencies.ref-cast]
+version = "1.0"
+
+[dev-dependencies.rustversion]
+version = "1.0"
+
+[dev-dependencies.trybuild]
+features = ["diff"]
+version = "1.0.66"
+
+[package]
+authors = ["David Tolnay <dtolnay@gmail.com>"]
+categories = ["rust-patterns"]
+description = "derive(Error)"
+documentation = "https://docs.rs/thiserror"
+edition = "2018"
+keywords = ["error", "error-handling", "derive"]
+license = "MIT OR Apache-2.0"
+name = "thiserror"
+readme = "README.md"
+repository = "https://github.com/dtolnay/thiserror"
+rust-version = "1.31"
+version = "1.0.38"
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
