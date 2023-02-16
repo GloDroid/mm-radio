@@ -149,20 +149,13 @@ impl IRadioSimAsyncServer for RadioSim {
         let cs = CardStatus {
             cardState: if sim_proxy.active().await.unwrap() { STATE_PRESENT } else { STATE_ABSENT },
             universalPinState: PinState::UNKNOWN,
-            applications: vec![
-                AppStatus {
-                    appType: APP_TYPE_USIM,
-                    appState: APP_STATE_READY,
-                    aidPtr: "0xA0 0x00 0x00 0x00 0x87 0x10 0x02 0xFF 0xFF 0xFF 0xFF 0x89"
-                        .to_string(),
-                    appLabelPtr: "".to_string(),
-                    pin1: PinState::UNKNOWN,
-                    pin2: PinState::UNKNOWN,
-                    ..Default::default()
-                },
-                AppStatus { appType: APP_TYPE_RUIM, ..Default::default() },
-                AppStatus { appType: APP_TYPE_ISIM, ..Default::default() },
-            ],
+            applications: vec![AppStatus {
+                appType: APP_TYPE_USIM,
+                appState: APP_STATE_READY,
+                pin1: PinState::UNKNOWN,
+                pin2: PinState::UNKNOWN,
+                ..Default::default()
+            }],
             gsmUmtsSubscriptionAppIndex: 0,
             cdmaSubscriptionAppIndex: -1,
             imsSubscriptionAppIndex: -1,
