@@ -432,13 +432,15 @@ impl IRadioVoiceAsyncServer for RadioVoice {
         let shared = shared!(&self);
         let ussd_proxy = shared.ussd_proxy.as_ref().unwrap();
         let state = ussd_proxy.state().await.unwrap();
-        let response = if state == 3
-        /*UserResponce*/
-        {
+        let response = if state == mm_modem_3gpp_ussd_session_state::USER_RESPONSE {
+            info!("Respond ussd: {}", ussd);
             ussd_proxy.respond(ussd).await.unwrap()
         } else {
+            info!("Initiate ussd: {}", ussd);
             ussd_proxy.initiate(ussd).await.unwrap()
         };
+        // Wait 100ms for the state to change
+        async_std::task::sleep(std::time::Duration::from_millis(100)).await;
         let state = ussd_proxy.state().await.unwrap();
         drop(shared);
 
@@ -447,6 +449,7 @@ impl IRadioVoiceAsyncServer for RadioVoice {
             mm_modem_3gpp_ussd_session_state::USER_RESPONSE => UssdModeType::REQUEST,
             _ => UssdModeType::LOCAL_CLIENT,
         };
+        info!("sendUssd state: {:?} response: {}", state, response);
         ind!(&self).onUssd(RadioIndicationType::UNSOLICITED, mode_type, &response)?;
         okay!(&self, serial, sendUssdResponse)
     }
