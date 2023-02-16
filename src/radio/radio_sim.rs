@@ -186,9 +186,11 @@ impl IRadioSimAsyncServer for RadioSim {
         entry_check!(&self, serial, iccCloseLogicalChannelResponse);
         okay!(&self, serial, iccCloseLogicalChannelResponse)
     }
+
     async fn iccIoForApp(&self, serial: i32, icc_io: &IccIo) -> binder::Result<()> {
         entry_check!(&self, serial, iccIoForAppResponse, &def());
         let icc_resp = fake_icc_profile::get_default_sim_io(icc_io);
+        info!("ICC Response: {:?}", icc_resp);
         okay!(&self, serial, iccIoForAppResponse, &icc_resp)
     }
     async fn iccOpenLogicalChannel(&self, serial: i32, _aid: &str, _p2: i32) -> binder::Result<()> {
