@@ -174,7 +174,9 @@ impl IRadioSimAsyncServer for RadioSim {
     }
     async fn getImsiForApp(&self, serial: i32, _aid: &str) -> binder::Result<()> {
         entry_check!(&self, serial, getImsiForAppResponse, "");
-        okay!(&self, serial, getImsiForAppResponse, "255010899987259")
+        let shared = shared!(&self);
+        let imsi = shared.sim_proxy.as_ref().unwrap().imsi().await.unwrap();
+        okay!(&self, serial, getImsiForAppResponse, imsi.as_str())
     }
     async fn getSimPhonebookCapacity(&self, serial: i32) -> binder::Result<()> {
         not_implemented!(&self, serial, getSimPhonebookCapacityResponse, &def())
