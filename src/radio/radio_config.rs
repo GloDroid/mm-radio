@@ -61,8 +61,8 @@ impl IRadioConfigAsyncServer for RadioConfig {
         entry_check!(&self, serial, getPhoneCapabilityResponse, &Default::default());
         let pc = PhoneCapability {
             isInternetLingeringSupported: false,
-            maxActiveData: 1,
-            maxActiveInternetData: 1,
+            maxActiveData: 0,
+            maxActiveInternetData: 0,
             logicalModemIds: vec![0],
         };
         resp!(&self).getPhoneCapabilityResponse(&resp_ok(serial), &pc)
@@ -70,9 +70,10 @@ impl IRadioConfigAsyncServer for RadioConfig {
     async fn setNumOfLiveModems(&self, serial: i32, _num_of_live_modems: i8) -> binder::Result<()> {
         not_implemented!(&self, serial, setNumOfLiveModemsResponse)
     }
-    async fn setPreferredDataModem(&self, serial: i32, _arg_modem_id: i8) -> binder::Result<()> {
+    async fn setPreferredDataModem(&self, serial: i32, modem_id: i8) -> binder::Result<()> {
         entry_check!(&self, serial, setPreferredDataModemResponse);
-        resp!(&self).setPreferredDataModemResponse(&resp_ok(serial))
+        info!("setPreferredDataModem: modem = {}", modem_id);
+        okay!(&self, serial, setPreferredDataModemResponse)
     }
     async fn setResponseFunctions(
         &self,

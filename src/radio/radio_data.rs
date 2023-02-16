@@ -6,7 +6,9 @@
  */
 
 use crate::mm_zbus::mm_modem_proxy::ModemProxy;
-use crate::utils::iradio::{declare_async_iradio, entry_check, not_implemented, shared, sharedmut};
+use crate::utils::iradio::{
+    declare_async_iradio, entry_check, not_implemented, okay, shared, sharedmut,
+};
 use android_hardware_radio::aidl::android::hardware::radio::AccessNetwork::AccessNetwork;
 use android_hardware_radio_data::aidl::android::hardware::radio::data::DataRequestReason::DataRequestReason as DRR;
 use android_hardware_radio_data::aidl::android::hardware::radio::data::{
@@ -80,7 +82,8 @@ impl IRadioDataAsyncServer for RadioData {
         not_implemented!(&self, serial, deactivateDataCallResponse)
     }
     async fn getDataCallList(&self, serial: i32) -> binder::Result<()> {
-        not_implemented!(&self, serial, getDataCallListResponse, &[])
+        entry_check!(&self, serial, getDataCallListResponse, &[]);
+        okay!(&self, serial, getDataCallListResponse, &[])
     }
     async fn getSlicingConfig(&self, serial: i32) -> binder::Result<()> {
         not_implemented!(&self, serial, getSlicingConfigResponse, &Default::default())
@@ -99,7 +102,9 @@ impl IRadioDataAsyncServer for RadioData {
         serial: i32,
         _profiles: &[DataProfileInfo],
     ) -> binder::Result<()> {
-        not_implemented!(&self, serial, setDataProfileResponse)
+        entry_check!(&self, serial, setDataProfileResponse);
+        info!("setDataProfile: {:?}", _profiles);
+        okay!(&self, serial, setDataProfileResponse)
     }
 
     async fn setDataThrottling(
@@ -116,7 +121,9 @@ impl IRadioDataAsyncServer for RadioData {
         serial: i32,
         _data_profile_info: Option<&DataProfileInfo>,
     ) -> binder::Result<()> {
-        not_implemented!(&self, serial, setInitialAttachApnResponse)
+        entry_check!(&self, serial, setInitialAttachApnResponse);
+        info!("setInitialAttachApn: {:?}", _data_profile_info);
+        okay!(&self, serial, setInitialAttachApnResponse)
     }
 
     async fn setupDataCall(
