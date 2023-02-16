@@ -6,7 +6,10 @@
  */
 
 use crate::{
-    mm_zbus::{mm_modem_3gpp_proxy::Modem3gppProxy, mm_modem_proxy::ModemProxy},
+    mm_zbus::{
+        mm_modem_3gpp_proxy::Modem3gppProxy, mm_modem_proxy::ModemProxy,
+        mm_signal_proxy::SignalProxy,
+    },
     utils::iradio::{
         declare_async_iradio, def, entry_check, ind, not_implemented, okay, shared, sharedmut,
     },
@@ -15,18 +18,21 @@ use android_hardware_radio::aidl::android::hardware::radio::{
     AccessNetwork::*, RadioIndicationType::*, RadioTechnology::*, RadioTechnologyFamily::*,
 };
 use android_hardware_radio_network::aidl::android::hardware::radio::network::{
-    AccessTechnologySpecificInfo::*, CdmaRoamingType::*, CdmaSignalStrength::*,
-    CellConnectionStatus::*, CellIdentity::*, CellIdentityLte::*, CellInfo::*, CellInfoLte::*,
+    AccessTechnologySpecificInfo::*, CdmaRoamingType::*, CellConnectionStatus::*, CellIdentity::*,
+    CellIdentityLte::*, CellInfo::*, CellInfoLte::*,
     CellInfoRatSpecificInfo::CellInfoRatSpecificInfo::Lte, EutranBands::*,
-    EutranRegistrationInfo::*, EvdoSignalStrength::*, GsmSignalStrength::*, IRadioNetwork::*,
-    IRadioNetworkIndication::*, IRadioNetworkResponse::*, LteSignalStrength::*, LteVopsInfo::*,
-    NetworkScanRequest::*, NrDualConnectivityState::*, NrSignalStrength::*, OperatorInfo::*,
-    RadioAccessSpecifier::*, RadioBandMode::*, RegState::*, RegStateResult::*, SignalStrength::*,
-    SignalThresholdInfo::*, TdscdmaSignalStrength::*, UsageSetting::*, WcdmaSignalStrength::*,
+    EutranRegistrationInfo::*, IRadioNetwork::*, IRadioNetworkIndication::*,
+    IRadioNetworkResponse::*, LteSignalStrength::*, LteVopsInfo::*, NetworkScanRequest::*,
+    NrDualConnectivityState::*, OperatorInfo::*, RadioAccessSpecifier::*, RadioBandMode::*,
+    RegState::*, RegStateResult::*, SignalStrength::*, SignalThresholdInfo::*, UsageSetting::*,
 };
 
-use async_std::{sync::RwLock, task::block_on};
+use async_std::{
+    sync::RwLock,
+    task::{block_on, spawn},
+};
 use binder::{BinderFeatures, Strong};
+use futures::{select, FutureExt, StreamExt};
 use log::info;
 use std::sync::Arc;
 use zbus::export::async_trait::async_trait;
@@ -39,7 +45,9 @@ pub struct RadioNetworkShared {
 
     modem_proxy: Option<ModemProxy<'static>>,
     modem_3gpp_proxy: Option<Modem3gppProxy<'static>>,
+    signal_proxy: Option<SignalProxy<'static>>,
 
+    signal_strength: SignalStrength,
     usage_setting: UsageSetting,
 }
 
@@ -57,9 +65,53 @@ impl RadioNetworkShared {
             let conn = modem_proxy.connection();
             let modem_path = modem_proxy.path().to_string();
             shared.modem_3gpp_proxy = Some(
-                block_on(Modem3gppProxy::builder(conn).path(modem_path).unwrap().build()).unwrap(),
+                block_on(Modem3gppProxy::builder(conn).path(modem_path.clone()).unwrap().build())
+                    .unwrap(),
             );
+            shared.signal_proxy = Some(
+                block_on(SignalProxy::builder(conn).path(modem_path).unwrap().build()).unwrap(),
+            );
+
             shared.modem_bound = true;
+        }
+        /* Subscribe RSSI events */
+        {
+            let shared_cl = shared_in.clone();
+            spawn(async move {
+                let sp = shared_cl.read().await.signal_proxy.as_ref().unwrap().clone();
+                let mut lte_prop = sp.receive_lte_changed().await;
+                loop {
+                    select! {
+                        e = lte_prop.next().fuse() => {
+                            let state = e.unwrap().get().await.unwrap();
+                            info!("Signal LTE: {:?}", state);
+                            let mut shared = shared_cl.write().await;
+                            let res: Option<()> = try {
+                                let rssi:f64 = state.get("rssi")?.try_into().ok()?;
+                                let rsrq:f64 = state.get("rsrq")?.try_into().ok()?;
+                                let rsrp:f64 = state.get("rsrp")?.try_into().ok()?;
+                                let snr:f64 = state.get("snr")?.try_into().ok()?;
+                                shared.signal_strength.lte = LteSignalStrength {
+                                    signalStrength: ((rssi + 111f64) / 2f64) as i32,
+                                    rsrq: -rsrq as i32,
+                                    rsrp: rsrp as i32,
+                                    rssnr: snr as i32,
+                                    ..Default::default()
+                                };
+                            };
+                            if res.is_none() {
+                                continue;
+                            }
+                            info!("Signal LTE reported: {:?}", shared.signal_strength.lte);
+                            drop(shared);
+                            Self::notify_frontend(&shared_cl).await;
+                        },
+                        complete => break,
+                    };
+                }
+
+                info!("Exit");
+            });
         }
     }
 
@@ -68,6 +120,14 @@ impl RadioNetworkShared {
         shared.modem_bound = false;
         shared.modem_proxy = None;
         shared.modem_3gpp_proxy = None;
+    }
+
+    pub async fn notify_frontend(shared_in: &Arc<RwLock<RadioNetworkShared>>) {
+        let shared = shared_in.read().await;
+        if let Some(ind) = &shared.indication {
+            ind.currentSignalStrength(RadioIndicationType::UNSOLICITED, &shared.signal_strength)
+                .unwrap();
+        }
     }
 }
 
@@ -117,20 +177,13 @@ impl IRadioNetworkAsyncServer for RadioNetwork {
 
     async fn getCellInfoList(&self, serial: i32) -> binder::Result<()> {
         entry_check!(&self, serial, getCellInfoListResponse, def());
+        let shared = shared!(&self);
         let cil = [CellInfo {
             registered: true,
             connectionStatus: CellConnectionStatus::PRIMARY_SERVING,
             ratSpecificInfo: Lte(CellInfoLte {
                 cellIdentityLte: get_fake_cell_identity_lte(),
-                signalStrengthLte: LteSignalStrength {
-                    signalStrength: 14,
-                    rsrp: 16,
-                    rsrq: 4,
-                    rssnr: 2,
-                    cqi: std::i32::MAX,
-                    timingAdvance: std::i32::MAX,
-                    cqiTableIndex: std::i32::MAX,
-                },
+                signalStrengthLte: shared.signal_strength.lte.clone(),
             }),
         }];
         okay!(&self, serial, getCellInfoListResponse, &cil)
@@ -172,50 +225,8 @@ impl IRadioNetworkAsyncServer for RadioNetwork {
 
     async fn getSignalStrength(&self, serial: i32) -> binder::Result<()> {
         entry_check!(&self, serial, getSignalStrengthResponse, &def());
-        let ss = SignalStrength {
-            gsm: GsmSignalStrength {
-                timingAdvance: std::i32::MAX,
-                signalStrength: std::i32::MAX,
-                bitErrorRate: std::i32::MAX,
-            },
-            cdma: CdmaSignalStrength { dbm: std::i32::MAX, ecio: std::i32::MAX },
-            evdo: EvdoSignalStrength {
-                dbm: std::i32::MAX,
-                ecio: std::i32::MAX,
-                signalNoiseRatio: std::i32::MAX,
-            },
-            lte: LteSignalStrength {
-                signalStrength: 14,
-                rsrp: 16,
-                rsrq: 4,
-                rssnr: 2,
-                cqi: std::i32::MAX,
-                timingAdvance: std::i32::MAX,
-                cqiTableIndex: std::i32::MAX,
-            },
-            tdscdma: TdscdmaSignalStrength {
-                bitErrorRate: std::i32::MAX,
-                signalStrength: std::i32::MAX,
-                rscp: std::i32::MAX,
-            },
-            wcdma: WcdmaSignalStrength {
-                ecno: std::i32::MAX,
-                rscp: std::i32::MAX,
-                signalStrength: std::i32::MAX,
-                bitErrorRate: std::i32::MAX,
-            },
-            nr: NrSignalStrength {
-                csiCqiTableIndex: std::i32::MAX,
-                csiRsrp: std::i32::MAX,
-                csiRsrq: std::i32::MAX,
-                csiSinr: std::i32::MAX,
-                ssRsrp: std::i32::MAX,
-                ssRsrq: std::i32::MAX,
-                ssSinr: std::i32::MAX,
-                ..Default::default()
-            },
-        };
-        okay!(&self, serial, getSignalStrengthResponse, &ss)
+        let shared = shared!(&self);
+        okay!(&self, serial, getSignalStrengthResponse, &shared.signal_strength)
     }
 
     async fn getSystemSelectionChannels(&self, serial: i32) -> binder::Result<()> {
@@ -345,7 +356,16 @@ impl IRadioNetworkAsyncServer for RadioNetwork {
         serial: i32,
         _signal_threshold_infos: &[SignalThresholdInfo],
     ) -> binder::Result<()> {
-        not_implemented!(&self, serial, setSignalStrengthReportingCriteriaResponse)
+        entry_check!(&self, serial, setSignalStrengthReportingCriteriaResponse);
+        let shared = shared!(&self);
+        // Thresholds-based reporting doesn't work on PP:
+        // let thresholds = HashMap::from([
+        //     ("rssi-threshold", 1u32.into()),
+        //     ("error-rate-threshold", false.into()),
+        // ]);
+        // shared.signal_proxy.as_ref().unwrap().setup_thresholds(thresholds).await.unwrap();
+        shared.signal_proxy.as_ref().unwrap().setup(10).await.unwrap();
+        okay!(&self, serial, setSignalStrengthReportingCriteriaResponse)
     }
 
     async fn setSuppServiceNotifications(&self, serial: i32, _enable: bool) -> binder::Result<()> {

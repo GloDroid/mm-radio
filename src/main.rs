@@ -6,6 +6,7 @@
  */
 
 #![feature(async_closure)]
+#![feature(try_blocks)]
 
 mod mm_zbus;
 mod radio;

@@ -343,8 +343,8 @@ pub mod aidl {
             impl Default for r#CdmaSignalStrength {
               fn default() -> Self {
                 Self {
-                  r#dbm: 0,
-                  r#ecio: 0,
+                  r#dbm: i32::MAX,
+                  r#ecio: i32::MAX,
                 }
               }
             }
@@ -1673,9 +1673,9 @@ pub mod aidl {
             impl Default for r#EvdoSignalStrength {
               fn default() -> Self {
                 Self {
-                  r#dbm: 0,
-                  r#ecio: 0,
-                  r#signalNoiseRatio: 0,
+                  r#dbm: i32::MAX,
+                  r#ecio: i32::MAX,
+                  r#signalNoiseRatio: i32::MAX,
                 }
               }
             }
@@ -1752,9 +1752,9 @@ pub mod aidl {
             impl Default for r#GsmSignalStrength {
               fn default() -> Self {
                 Self {
-                  r#signalStrength: 0,
-                  r#bitErrorRate: 0,
-                  r#timingAdvance: 0,
+                  r#signalStrength: i32::MAX,
+                  r#bitErrorRate: i32::MAX,
+                  r#timingAdvance: i32::MAX,
                 }
               }
             }
@@ -6315,7 +6315,7 @@ pub mod aidl {
                     pub mod LteSignalStrength {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
-            #[derive(Debug)]
+            #[derive(Debug, Clone)]
             pub struct r#LteSignalStrength {
               pub r#signalStrength: i32,
               pub r#rsrp: i32,
@@ -6328,13 +6328,13 @@ pub mod aidl {
             impl Default for r#LteSignalStrength {
               fn default() -> Self {
                 Self {
-                  r#signalStrength: 0,
-                  r#rsrp: 0,
-                  r#rsrq: 0,
-                  r#rssnr: 0,
-                  r#cqi: 0,
-                  r#timingAdvance: 0,
-                  r#cqiTableIndex: 0,
+                  r#signalStrength: i32::MAX,
+                  r#rsrp: i32::MAX,
+                  r#rsrq: i32::MAX,
+                  r#rssnr: i32::MAX,
+                  r#cqi: i32::MAX,
+                  r#timingAdvance: i32::MAX,
+                  r#cqiTableIndex: i32::MAX,
                 }
               }
             }
@@ -6724,12 +6724,12 @@ pub mod aidl {
             impl Default for r#NrSignalStrength {
               fn default() -> Self {
                 Self {
-                  r#ssRsrp: 0,
-                  r#ssRsrq: 0,
-                  r#ssSinr: 0,
-                  r#csiRsrp: 0,
-                  r#csiRsrq: 0,
-                  r#csiSinr: 0,
+                  r#ssRsrp: i32::MAX,
+                  r#ssRsrq: i32::MAX,
+                  r#ssSinr: i32::MAX,
+                  r#csiRsrp: i32::MAX,
+                  r#csiRsrq: i32::MAX,
+                  r#csiSinr: i32::MAX,
                   r#csiCqiTableIndex: 0,
                   r#csiCqiReport: Default::default(),
                 }
@@ -7463,7 +7463,7 @@ pub mod aidl {
                     pub mod SignalStrength {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
-            #[derive(Debug)]
+            #[derive(Debug, Default)]
             pub struct r#SignalStrength {
               pub r#gsm: crate::mangled::_7_android_8_hardware_5_radio_7_network_17_GsmSignalStrength,
               pub r#cdma: crate::mangled::_7_android_8_hardware_5_radio_7_network_18_CdmaSignalStrength,
@@ -7472,19 +7472,6 @@ pub mod aidl {
               pub r#tdscdma: crate::mangled::_7_android_8_hardware_5_radio_7_network_21_TdscdmaSignalStrength,
               pub r#wcdma: crate::mangled::_7_android_8_hardware_5_radio_7_network_19_WcdmaSignalStrength,
               pub r#nr: crate::mangled::_7_android_8_hardware_5_radio_7_network_16_NrSignalStrength,
-            }
-            impl Default for r#SignalStrength {
-              fn default() -> Self {
-                Self {
-                  r#gsm: Default::default(),
-                  r#cdma: Default::default(),
-                  r#evdo: Default::default(),
-                  r#lte: Default::default(),
-                  r#tdscdma: Default::default(),
-                  r#wcdma: Default::default(),
-                  r#nr: Default::default(),
-                }
-              }
             }
             impl binder::Parcelable for r#SignalStrength {
               fn write_to_parcel(&self, parcel: &mut binder::binder_impl::BorrowedParcel) -> std::result::Result<(), binder::StatusCode> {
@@ -7690,9 +7677,9 @@ pub mod aidl {
             impl Default for r#TdscdmaSignalStrength {
               fn default() -> Self {
                 Self {
-                  r#signalStrength: 0,
-                  r#bitErrorRate: 0,
-                  r#rscp: 0,
+                  r#signalStrength: i32::MAX,
+                  r#bitErrorRate: i32::MAX,
+                  r#rscp: i32::MAX,
                 }
               }
             }
@@ -7797,10 +7784,10 @@ pub mod aidl {
             impl Default for r#WcdmaSignalStrength {
               fn default() -> Self {
                 Self {
-                  r#signalStrength: 0,
-                  r#bitErrorRate: 0,
-                  r#rscp: 0,
-                  r#ecno: 0,
+                  r#signalStrength: i32::MAX,
+                  r#bitErrorRate: i32::MAX,
+                  r#rscp: i32::MAX,
+                  r#ecno: i32::MAX,
                 }
               }
             }
