@@ -204,12 +204,11 @@ fn spawn_object_manager(
         let removed = block_on(omproxy.receive_interfaces_removed()).unwrap();
         let mut added = added;
         let mut removed = removed;
-
         loop {
             select! {
                 e = added.next().fuse() => {
                     let e = e.unwrap();
-                    let path = e.path().unwrap();
+                    let path = e.args().unwrap().object_path;
                     let mut objects = rhm.objects.lock().unwrap();
                     let index = objects.iter().position(|x| x == &path.to_string());
                     if index.is_some() {
@@ -221,7 +220,8 @@ fn spawn_object_manager(
                 },
                 e = removed.next().fuse() => {
                     let e = e.unwrap();
-                    (cbks.modem_removed)(&rhm, &e.path().unwrap());
+                    let path = e.args().unwrap().object_path;
+                    (cbks.modem_removed)(&rhm, &path);
                     let mut objects = rhm.objects.lock().unwrap();
                     let index = objects.iter().position(|x| x == &e.path().unwrap().to_string());
                     if index.is_some() {
