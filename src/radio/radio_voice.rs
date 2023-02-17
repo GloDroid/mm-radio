@@ -215,8 +215,7 @@ impl RadioVoiceShared {
 
     async fn find_call(&self, mm_state: i32) -> Option<&Call> {
         for c in self.calls.values() {
-            let state = c.call_state_mm_to_aidl().await;
-            if state == Some(mm_state) {
+            if c.proxy.state().await.ok()? == mm_state {
                 return Some(c);
             }
         }
