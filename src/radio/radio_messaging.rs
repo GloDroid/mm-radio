@@ -102,19 +102,22 @@ impl RadioMessagingShared {
                     shared.messaging_proxy.as_ref().unwrap().clone()
                 };
                 let mut added_signal = mproxy.receive_added().await.unwrap();
-                select! {
-                    added = added_signal.next().fuse() => {
-                        let added = added.unwrap();
-                        let received = added.args().unwrap().received;
-                        if received {
-                            let path = added.args().unwrap().path;
-                            info!("Received new SMS: {}", path);
-                            {
-                                let mut shared = shared_in_c.write().await;
-                                shared.sms_deliver_queue.push_back(path.into());
+                loop {
+                    select! {
+                        added = added_signal.next().fuse() => {
+                            let added = added.unwrap();
+                            let received = added.args().unwrap().received;
+                            if received {
+                                let path = added.args().unwrap().path;
+                                info!("Received new SMS: {}", path);
+                                {
+                                    let mut shared = shared_in_c.write().await;
+                                    shared.sms_deliver_queue.push_back(path.into());
+                                }
+                                RadioMessagingShared::forward_next_sms(&shared_in_c).await;
                             }
-                            RadioMessagingShared::forward_next_sms(&shared_in_c).await;
                         }
+                        complete => break,
                     }
                 }
             });
