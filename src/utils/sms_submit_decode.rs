@@ -12,6 +12,7 @@
 use crate::utils::pdu_helpers::address::address_from_pdu;
 use crate::utils::pdu_helpers::div_round_up;
 use crate::utils::pdu_helpers::gsm7::gsm7_pdu_to_string;
+use log::error;
 
 pub(crate) fn sms_submit_decode(in_pdu: &str) -> Option<(String /*number*/, String /*text*/)> {
     let mut pdu = in_pdu;
@@ -83,8 +84,15 @@ pub(crate) fn sms_submit_decode(in_pdu: &str) -> Option<(String /*number*/, Stri
     } else if encoding_is_ucs2 {
         for _ in 0..tp_udl / 2 {
             let ucs2_u16 = u16::from_str_radix(&pdu[..4], 16).unwrap();
-            let ucs2_char = char::decode_utf16([ucs2_u16].iter().cloned()).next().unwrap().unwrap();
-            message.push(ucs2_char);
+            let success: Option<()> = try {
+                let ucs2_char = char::decode_utf16([ucs2_u16].iter().cloned()).next()?.ok()?;
+                message.push(ucs2_char);
+            };
+            if success.is_none() {
+                error!("Invalid UCS2 character");
+                return None;
+            }
+
             pdu = &pdu[4..];
         }
     } else {
