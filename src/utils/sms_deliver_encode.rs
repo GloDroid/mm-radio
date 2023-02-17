@@ -48,7 +48,7 @@ mod tests {
             "000ED0E474D81C0EBB0100081110113152140016006400690061006600610061006E002E0063006F006D"
         );
 
-        let address = "123456789";
+        let address = "+123456789";
         let text = "Послуга тимчасово недоступна. Спробуйте будь ласка пізніше.";
         let timestamp = "2019-02-15 21:52:19+00";
         let pdu = sms_deliver_encode(address, text, timestamp);

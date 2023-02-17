@@ -5,12 +5,17 @@
  * Copyright (C) 2023 The GloDroid Project
  */
 
+/* Ref: https://en.wikipedia.org/wiki/GSM_03.40 */
+
 use super::{align, div_round_up};
 use crate::utils::pdu_helpers::gsm7::{gsm7_pdu_from_string, gsm7_pdu_to_string};
 use std::io;
 
 pub(crate) fn address_to_pdu(utf8: &str, is_smsc: bool) -> Result<String, io::Error> {
     let mut result = String::new();
+    let (international, utf8) =
+        if let Some(number) = utf8.strip_prefix('+') { (true, number) } else { (false, utf8) };
+
     let alphabetic = !utf8.chars().all(|c| c.is_ascii_digit());
     if alphabetic {
         let pdu = gsm7_pdu_from_string(utf8).map_err(|_| io::ErrorKind::InvalidData)?;
@@ -28,7 +33,8 @@ pub(crate) fn address_to_pdu(utf8: &str, is_smsc: bool) -> Result<String, io::Er
         } else {
             result.push_str(&format!("{:02X}", utf8.chars().count()));
         }
-        result.push_str("91");
+        let ext_ton_npi: u8 = if international { 0b1001_0001 } else { 0b1010_0001 };
+        result.push_str(&format!("{:02X}", ext_ton_npi));
         result.push_str(&pdu);
     }
 
@@ -52,6 +58,7 @@ pub(crate) fn address_from_pdu(pdu: &str, is_smsc: bool) -> Result<(String, usiz
     let toa = (pdu_type & 0x70) >> 4;
     let _npi = pdu_type & 0x0F;
     let toa_alphabetic = 0b00000101;
+    let toa_international = 0b00000001;
 
     let pdu_len_chars = if is_smsc {
         pdu_len * 2 + 2 /* 2 = Length octet */
@@ -64,7 +71,12 @@ pub(crate) fn address_from_pdu(pdu: &str, is_smsc: bool) -> Result<(String, usiz
     let utf8 = if toa == toa_alphabetic {
         gsm7_pdu_to_string(pdu_number).map_err(|_| io::ErrorKind::InvalidData)?
     } else {
-        address_numeric_from_pdu(pdu_number)?
+        let utf8 = address_numeric_from_pdu(pdu_number)?;
+        if toa == toa_international {
+            format!("+{}", utf8)
+        } else {
+            utf8
+        }
     };
 
     Ok((utf8, pdu_len_chars))
@@ -118,15 +130,15 @@ mod tests {
     use super::*;
 
     const PHONE_TO_PDU: &[(&str, &str)] = &[
-        ("46708251358", "0B916407281553F8"),
-        ("467082513587", "0C91640728155378"),
+        ("+46708251358", "0B916407281553F8"),
+        ("+467082513587", "0C91640728155378"),
         ("Hastalavista", "16D0C8F09C1E6687EDE9393D0C"),
     ];
 
     // SMSC address has different length encoding
     const PHONE_TO_PDU_SMSC: &[(&str, &str)] = &[
-        ("46708251358", "07916407281553F8"),
-        ("467082513587", "0791640728155378"),
+        ("+46708251358", "07916407281553F8"),
+        ("+467082513587", "0791640728155378"),
         ("Hastalavista", "0CD0C8F09C1E6687EDE9393D0C"),
     ];
 

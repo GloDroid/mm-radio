@@ -107,13 +107,13 @@ mod tests {
             "01000C9183103254769800001DD4F29C0E6A97E7F3F0B90C32BFE5A076BB250F93D36F1032C804",
         )
         .unwrap();
-        assert_eq!(destination, "380123456789");
+        assert_eq!(destination, "+380123456789");
         assert_eq!(message, "Test message for mm-radio HAL");
 
         let (destination, message) = sms_submit_decode(
             "01000C918310325476980008460422043504410442043E043204350020043F043E043204560434043E043C043B0435043D043D044F0020044300200444043E0440043C04300442045600200055004300530032"
         ).unwrap();
-        assert_eq!(destination, "380123456789");
+        assert_eq!(destination, "+380123456789");
         assert_eq!(message, "Тестове повідомлення у форматі UCS2");
 
         let (destination, message) = sms_submit_decode("0100038146F3000003D3F61C").unwrap();
