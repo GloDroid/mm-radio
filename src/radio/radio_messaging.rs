@@ -298,7 +298,7 @@ impl IRadioMessagingAsyncServer for RadioMessaging {
                 .response
                 .as_ref()
                 .unwrap()
-                .sendSmsResponse(&respond(serial, RadioError::SMS_SEND_FAIL_RETRY), &def())
+                .sendSmsResponse(&respond(serial, RadioError::NONE), &def())
                 .unwrap();
         });
 

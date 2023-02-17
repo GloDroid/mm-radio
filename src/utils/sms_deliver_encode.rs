@@ -11,8 +11,6 @@ use crate::utils::pdu_helpers::address::address_to_pdu;
 use crate::utils::pdu_helpers::time::Timestamp;
 
 pub(crate) fn sms_deliver_encode(address: &str, text: &str, timestamp: &str) -> String {
-    let text_len = text.chars().count();
-
     let mut pdu = String::new();
     // SMS-DELIVER (TP-MTI = 0b00) (TP-MMS = 0b0) (TP-SRI = 0b0) (TP-UDHI = 0b0) (TP-RP = 0b0)
     pdu.push_str("00");
@@ -25,7 +23,8 @@ pub(crate) fn sms_deliver_encode(address: &str, text: &str, timestamp: &str) -> 
     // Timestamp
     pdu.push_str(&Timestamp::from_mm_format(timestamp).to_pdu());
     // User data length
-    pdu.push_str(&format!("{:02X}", text_len * 2));
+    let text_len_bytes = std::cmp::min(text.chars().count() * 2, 254);
+    pdu.push_str(&format!("{:02X}", text_len_bytes));
     // User data
     for c in text.chars() {
         pdu.push_str(&format!("{:04X}", c as u16));
