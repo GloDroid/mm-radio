@@ -7,7 +7,9 @@
 
 use crate::{
     mm_zbus::{
-        consts::mm_sms_state, mm_messaging_proxy::MessagingProxy, mm_modem_proxy::ModemProxy,
+        consts::mm_sms_state::{self, RECEIVED, RECEIVING},
+        mm_messaging_proxy::MessagingProxy,
+        mm_modem_proxy::ModemProxy,
         mm_sms_proxy::SmsProxy,
     },
     utils::{
@@ -81,8 +83,10 @@ impl RadioMessagingShared {
                 let sms_proxy =
                     block_on(SmsProxy::builder(conn).path(path.clone()).unwrap().build()).unwrap();
                 let state = block_on(sms_proxy.state());
-                if state.is_ok() && state.unwrap() == mm_sms_state::RECEIVED {
-                    received_sms.push_back(path);
+                if let Ok(state) = state {
+                    if state == RECEIVED || state == RECEIVING {
+                        received_sms.push_back(path);
+                    }
                 }
             }
         }
@@ -146,6 +150,15 @@ impl RadioMessagingShared {
         let conn = shared.modem_proxy.as_ref().unwrap().connection();
         let sms_proxy = SmsProxy::builder(conn).path(path).unwrap().build().await.unwrap();
 
+        // Wait for the SMS to be fully received, limit 30 tries x 1s
+        for _ in 0..30 {
+            let state = sms_proxy.state().await.unwrap();
+            if state == mm_sms_state::RECEIVED {
+                break;
+            }
+            async_std::task::sleep(std::time::Duration::from_secs(1)).await;
+        }
+
         let number = sms_proxy.number().await.unwrap();
         let text = sms_proxy.text().await.unwrap();
         let timestamp = sms_proxy.timestamp().await.unwrap();
@@ -195,10 +208,11 @@ impl IRadioMessagingAsyncServer for RadioMessaging {
         let sms_path = sharedmut!(&self).sms_deliver_queue.pop_front();
 
         if let Some(path) = sms_path {
-            {
+            let result: Result<(), zbus::Error> = try {
                 let shared = shared!(&self);
-                shared.messaging_proxy.as_ref().unwrap().delete(&path).await.unwrap();
-            }
+                shared.messaging_proxy.as_ref().unwrap().delete(&path).await?;
+            };
+            result.unwrap_or_else(|e| error!("Failed to delete SMS: {}", e));
             RadioMessagingShared::forward_next_sms(&self.shared).await;
         }
 
