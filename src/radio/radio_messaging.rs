@@ -7,7 +7,10 @@
 
 use crate::{
     mm_zbus::{
-        consts::mm_sms_state::{self, RECEIVED, RECEIVING},
+        consts::{
+            mm_modem_state,
+            mm_sms_state::{self, RECEIVED, RECEIVING},
+        },
         mm_messaging_proxy::MessagingProxy,
         mm_modem_proxy::ModemProxy,
         mm_sms_proxy::SmsProxy,
@@ -71,30 +74,31 @@ impl RadioMessagingShared {
             shared.modem_bound = true;
         }
 
-        let mut received_sms = VecDeque::new();
+        /* Query RECEIVED SMS from the Modem Manager (can fail if modem is disabled) */
+        let _ = block_on(Self::query_pending_sms(shared_in));
 
-        /* Query RECEIVED SMS from the Modem Manager */
+        /* Subscribe for modem enable events to query pending SMS */
         {
-            let shared = block_on(shared_in.read());
-            let messages = block_on(shared.messaging_proxy.as_ref().unwrap().messages()).unwrap();
-
-            let conn = shared.modem_proxy.as_ref().unwrap().connection();
-            for path in messages {
-                let sms_proxy =
-                    block_on(SmsProxy::builder(conn).path(path.clone()).unwrap().build()).unwrap();
-                let state = block_on(sms_proxy.state());
-                if let Ok(state) = state {
-                    if state == RECEIVED || state == RECEIVING {
-                        received_sms.push_back(path);
-                    }
+            let shared_in_c = shared_in.clone();
+            spawn(async move {
+                let mproxy = {
+                    let shared = shared_in_c.read().await;
+                    shared.modem_proxy.as_ref().unwrap().clone()
+                };
+                let mut st_prop = mproxy.receive_state_changed().await;
+                loop {
+                    select! {
+                        e = st_prop.next().fuse() => {
+                            let state = e.unwrap().get().await.unwrap();
+                            if state == mm_modem_state::ENABLED || state == mm_modem_state::REGISTERED {
+                                info!("Modem enabled, querying pending SMS");
+                                let _ = Self::query_pending_sms(&shared_in_c).await;
+                            }
+                        },
+                        complete => break,
+                    };
                 }
-            }
-        }
-
-        /* Put them into shared structure */
-        {
-            let mut shared = block_on(shared_in.write());
-            shared.sms_deliver_queue = received_sms;
+            });
         }
 
         /* Subscribe for new received SMS events */
@@ -134,6 +138,33 @@ impl RadioMessagingShared {
         let mut shared = block_on(shared_in.write());
         shared.modem_bound = false;
         shared.modem_proxy = None;
+    }
+
+    async fn query_pending_sms(
+        shared_in: &Arc<RwLock<RadioMessagingShared>>,
+    ) -> Result<(), zbus::Error> {
+        let shared = shared_in.read().await;
+        let messages = shared.messaging_proxy.as_ref().unwrap().messages().await?;
+
+        let mut received_sms = VecDeque::new();
+
+        let conn = shared.modem_proxy.as_ref().unwrap().connection();
+        for path in messages {
+            let sms_proxy = SmsProxy::builder(conn).path(path.clone())?.build().await?;
+            let state = sms_proxy.state().await?;
+            if (state == RECEIVED || state == RECEIVING)
+                && !shared.sms_deliver_queue.contains(&path)
+            {
+                received_sms.push_back(path);
+            }
+        }
+        drop(shared);
+        {
+            let mut shared = shared_in.write().await;
+            shared.sms_deliver_queue.extend(received_sms);
+        }
+
+        Ok(())
     }
 
     async fn forward_next_sms(shared_in: &Arc<RwLock<RadioMessagingShared>>) {
