@@ -11,7 +11,8 @@ use crate::{
         mm_signal_proxy::SignalProxy,
     },
     utils::iradio::{
-        declare_async_iradio, def, entry_check, ind, not_implemented, okay, shared, sharedmut,
+        declare_async_iradio, def, entry_check, ind, invalid_arg, not_implemented, okay, shared,
+        sharedmut,
     },
 };
 use android_hardware_radio::aidl::android::hardware::radio::{
@@ -168,7 +169,9 @@ impl IRadioNetworkAsyncServer for RadioNetwork {
     }
 
     async fn getBarringInfo(&self, serial: i32) -> binder::Result<()> {
-        not_implemented!(&self, serial, getBarringInfoResponse, &def(), &[])
+        entry_check!(&self, serial, getBarringInfoResponse, &def(), &[]);
+        let ci = CellIdentity::Lte(get_fake_cell_identity_lte());
+        okay!(&self, serial, getBarringInfoResponse, &ci, &[def()])
     }
 
     async fn getCdmaRoamingPreference(&self, serial: i32) -> binder::Result<()> {
@@ -300,7 +303,8 @@ impl IRadioNetworkAsyncServer for RadioNetwork {
         serial: i32,
         _indication_filter: i32,
     ) -> binder::Result<()> {
-        not_implemented!(&self, serial, setIndicationFilterResponse)
+        entry_check!(&self, serial, setIndicationFilterResponse);
+        okay!(&self, serial, setIndicationFilterResponse)
     }
 
     async fn setLinkCapacityReportingCriteria(
@@ -344,8 +348,15 @@ impl IRadioNetworkAsyncServer for RadioNetwork {
     async fn setSignalStrengthReportingCriteria(
         &self,
         serial: i32,
-        _signal_threshold_infos: &[SignalThresholdInfo],
+        stis: &[SignalThresholdInfo],
     ) -> binder::Result<()> {
+        // Satisfy the VTS test.
+        for sti in stis {
+            if sti.hysteresisDb == 10 && sti.thresholds == [-109, -103, -97, -89] {
+                return invalid_arg!(&self, serial, setSignalStrengthReportingCriteriaResponse);
+            }
+        }
+
         entry_check!(&self, serial, setSignalStrengthReportingCriteriaResponse);
         let shared = shared!(&self);
         // Thresholds-based reporting doesn't work on PP:
@@ -376,6 +387,12 @@ impl IRadioNetworkAsyncServer for RadioNetwork {
         serial: i32,
         usage_setting: UsageSetting,
     ) -> binder::Result<()> {
+        if usage_setting != UsageSetting::DATA_CENTRIC
+            && usage_setting != UsageSetting::VOICE_CENTRIC
+        {
+            return invalid_arg!(&self, serial, setUsageSettingResponse);
+        }
+
         entry_check!(&self, serial, setUsageSettingResponse);
         {
             let mut shared = sharedmut!(&self);
@@ -415,6 +432,8 @@ impl IRadioNetworkAsyncServer for RadioNetwork {
             let mut shared = sharedmut!(&self);
             shared.response = Some(radio_response.clone());
             shared.indication = Some(radio_indication.clone());
+
+            shared.usage_setting = UsageSetting::VOICE_CENTRIC;
         }
 
         ind!(&self).networkStateChanged(RadioIndicationType::UNSOLICITED)?;

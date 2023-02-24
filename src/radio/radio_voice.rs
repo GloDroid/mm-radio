@@ -11,7 +11,8 @@ use crate::{
         mm_voice_proxy::VoiceProxy,
     },
     utils::iradio::{
-        declare_async_iradio, def, entry_check, ind, not_implemented, okay, shared, sharedmut,
+        declare_async_iradio, def, entry_check, ind, not_implemented, okay, resp_err, shared,
+        sharedmut,
     },
 };
 use android_hardware_radio::aidl::android::hardware::radio::RadioIndicationType::*;
@@ -263,7 +264,11 @@ impl IRadioVoiceAsyncServer for RadioVoice {
 
         let shared = shared!(&self);
         let call = shared.calls.get(&path.to_string()).unwrap();
-        call.proxy.start().await.unwrap();
+        let result = call.proxy.start().await;
+        if let Err(e) = result {
+            error!("Failed to start call: {:?}", e);
+            return resp_err!(&self, serial, RadioError::INTERNAL_ERR, dialResponse);
+        }
 
         info!("Dialing: {:?}", path);
         okay!(&self, serial, dialResponse)
@@ -286,7 +291,16 @@ impl IRadioVoiceAsyncServer for RadioVoice {
     async fn explicitCallTransfer(&self, serial: i32) -> binder::Result<()> {
         entry_check!(&self, serial, explicitCallTransferResponse);
         let shared = shared!(&self);
-        shared.voice_proxy.as_ref().unwrap().transfer().await.unwrap();
+        let result = shared.voice_proxy.as_ref().unwrap().transfer().await;
+        if let Err(e) = result {
+            error!("transfer failed: {}", e);
+            return resp_err!(
+                &self,
+                serial,
+                RadioError::INTERNAL_ERR,
+                hangupForegroundResumeBackgroundResponse
+            );
+        }
         okay!(&self, serial, explicitCallTransferResponse)
     }
     async fn getCallForwardStatus(
@@ -375,7 +389,16 @@ impl IRadioVoiceAsyncServer for RadioVoice {
     async fn hangupForegroundResumeBackground(&self, serial: i32) -> binder::Result<()> {
         entry_check!(&self, serial, hangupForegroundResumeBackgroundResponse);
         let shared = shared!(&self);
-        shared.voice_proxy.as_ref().unwrap().hangup_and_accept().await.unwrap();
+        let result = shared.voice_proxy.as_ref().unwrap().hangup_and_accept().await;
+        if let Err(e) = result {
+            error!("hangup_and_accept failed: {}", e);
+            return resp_err!(
+                &self,
+                serial,
+                RadioError::INTERNAL_ERR,
+                hangupForegroundResumeBackgroundResponse
+            );
+        }
         okay!(&self, serial, hangupForegroundResumeBackgroundResponse)
     }
     async fn hangupWaitingOrBackground(&self, serial: i32) -> binder::Result<()> {
@@ -431,13 +454,23 @@ impl IRadioVoiceAsyncServer for RadioVoice {
         let shared = shared!(&self);
         let ussd_proxy = shared.ussd_proxy.as_ref().unwrap();
         let state = ussd_proxy.state().await.unwrap();
-        let response = if state == mm_modem_3gpp_ussd_session_state::USER_RESPONSE {
+        let result = if state == mm_modem_3gpp_ussd_session_state::USER_RESPONSE {
             info!("Respond ussd: {}", ussd);
-            ussd_proxy.respond(ussd).await.unwrap()
+            ussd_proxy.respond(ussd).await
         } else {
             info!("Initiate ussd: {}", ussd);
-            ussd_proxy.initiate(ussd).await.unwrap()
+            ussd_proxy.initiate(ussd).await
         };
+        if let Err(e) = result {
+            error!("sendUssd failed: {}", e);
+            return resp_err!(
+                &self,
+                serial,
+                RadioError::INTERNAL_ERR,
+                hangupForegroundResumeBackgroundResponse
+            );
+        }
+        let response = result.unwrap();
         // Wait 100ms for the state to change
         async_std::task::sleep(std::time::Duration::from_millis(100)).await;
         let state = ussd_proxy.state().await.unwrap();
@@ -514,7 +547,16 @@ impl IRadioVoiceAsyncServer for RadioVoice {
         entry_check!(&self, serial, switchWaitingOrHoldingAndActiveResponse);
         let shared = shared!(&self);
         let vp = shared.voice_proxy.as_ref().unwrap();
-        vp.hold_and_accept().await.unwrap();
+        let result = vp.hold_and_accept().await;
+        if let Err(e) = result {
+            error!("hold_and_accept failed: {}", e);
+            return resp_err!(
+                &self,
+                serial,
+                RadioError::INTERNAL_ERR,
+                hangupForegroundResumeBackgroundResponse
+            );
+        }
         okay!(&self, serial, switchWaitingOrHoldingAndActiveResponse)
     }
 

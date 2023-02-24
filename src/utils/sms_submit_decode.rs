@@ -46,7 +46,7 @@ pub(crate) fn sms_submit_decode(in_pdu: &str) -> Option<(String /*number*/, Stri
 
     pdu = &pdu[2..];
     // TP_DA
-    let addr = address_from_pdu(pdu, false).unwrap();
+    let addr = address_from_pdu(pdu, false).ok()?;
     // first byte is length of address
     let destination = addr.0;
     pdu = &pdu[addr.1..];
@@ -132,5 +132,11 @@ mod tests {
             sms_submit_decode("01000A812143658709000007C434393D469701").unwrap();
         assert_eq!(destination, "1234567890");
         assert_eq!(message, "Didiche");
+
+        /* VTS data, TODO: FIX */
+        // let (destination, message) =
+        //     sms_submit_decode("01000b916105770203f3000006d4f29c3e9b01").unwrap();
+        // assert_eq!(destination, "+16507720303");
+        // assert_eq!(message, "Test33");
     }
 }

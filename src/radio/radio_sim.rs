@@ -8,10 +8,13 @@
 use crate::{
     mm_zbus::{mm_modem_proxy::ModemProxy, mm_sim_proxy::SimProxy},
     utils::iradio::{
-        declare_async_iradio, def, entry_check, not_implemented, okay, shared, sharedmut,
+        declare_async_iradio, def, entry_check, invalid_arg, not_implemented, okay, resp_err,
+        shared, sharedmut,
     },
 };
-use android_hardware_radio::aidl::android::hardware::radio::RadioIndicationType::RadioIndicationType;
+use android_hardware_radio::aidl::android::hardware::radio::{
+    RadioError::RadioError, RadioIndicationType::RadioIndicationType,
+};
 use android_hardware_radio_sim::aidl::android::hardware::radio::sim::{
     AppStatus::*, CardPowerState::*, CardStatus::*, CarrierRestrictions::*,
     CdmaSubscriptionSource::*, IRadioSim::*, IRadioSimIndication::*, IRadioSimResponse::*,
@@ -36,6 +39,8 @@ pub struct RadioSimShared {
     modem_proxy: Option<ModemProxy<'static>>,
     sim_proxy: Option<SimProxy<'static>>,
 
+    uiccapp_enabled: bool,
+    card_power_state: CardPowerState,
     channel: i32,
 }
 
@@ -94,7 +99,8 @@ impl RadioSimShared {
 #[async_trait]
 impl IRadioSimAsyncServer for RadioSim {
     async fn areUiccApplicationsEnabled(&self, serial: i32) -> binder::Result<()> {
-        not_implemented!(&self, serial, areUiccApplicationsEnabledResponse, false)
+        entry_check!(&self, serial, areUiccApplicationsEnabledResponse, false);
+        okay!(&self, serial, areUiccApplicationsEnabledResponse, shared!(&self).uiccapp_enabled)
     }
     async fn changeIccPin2ForApp(
         &self,
@@ -114,8 +120,9 @@ impl IRadioSimAsyncServer for RadioSim {
     ) -> binder::Result<()> {
         not_implemented!(&self, serial, changeIccPinForAppResponse, 0)
     }
-    async fn enableUiccApplications(&self, serial: i32, _enable: bool) -> binder::Result<()> {
+    async fn enableUiccApplications(&self, serial: i32, enable: bool) -> binder::Result<()> {
         entry_check!(&self, serial, enableUiccApplicationsResponse);
+        sharedmut!(&self).uiccapp_enabled = enable;
         okay!(&self, serial, enableUiccApplicationsResponse)
     }
     async fn getAllowedCarriers(&self, serial: i32) -> binder::Result<()> {
@@ -149,13 +156,17 @@ impl IRadioSimAsyncServer for RadioSim {
         let cs = CardStatus {
             cardState: if sim_proxy.active().await.unwrap() { STATE_PRESENT } else { STATE_ABSENT },
             universalPinState: PinState::UNKNOWN,
-            applications: vec![AppStatus {
-                appType: APP_TYPE_USIM,
-                appState: APP_STATE_READY,
-                pin1: PinState::UNKNOWN,
-                pin2: PinState::UNKNOWN,
-                ..Default::default()
-            }],
+            applications: if shared.card_power_state == CardPowerState::POWER_UP {
+                vec![AppStatus {
+                    appType: APP_TYPE_USIM,
+                    appState: APP_STATE_READY,
+                    pin1: PinState::UNKNOWN,
+                    pin2: PinState::UNKNOWN,
+                    ..Default::default()
+                }]
+            } else {
+                vec![]
+            },
             gsmUmtsSubscriptionAppIndex: 0,
             cdmaSubscriptionAppIndex: -1,
             imsSubscriptionAppIndex: -1,
@@ -177,7 +188,10 @@ impl IRadioSimAsyncServer for RadioSim {
     async fn getSimPhonebookRecords(&self, serial: i32) -> binder::Result<()> {
         not_implemented!(&self, serial, getSimPhonebookRecordsResponse)
     }
-    async fn iccCloseLogicalChannel(&self, serial: i32, _channel_id: i32) -> binder::Result<()> {
+    async fn iccCloseLogicalChannel(&self, serial: i32, channel_id: i32) -> binder::Result<()> {
+        if channel_id <= 0 {
+            return invalid_arg!(&self, serial, iccCloseLogicalChannelResponse);
+        }
         entry_check!(&self, serial, iccCloseLogicalChannelResponse);
         okay!(&self, serial, iccCloseLogicalChannelResponse)
     }
@@ -266,8 +280,10 @@ impl IRadioSimAsyncServer for RadioSim {
     ) -> binder::Result<()> {
         not_implemented!(&self, serial, setFacilityLockForAppResponse, 0)
     }
-    async fn setSimCardPower(&self, serial: i32, _power_up: CardPowerState) -> binder::Result<()> {
-        not_implemented!(&self, serial, setSimCardPowerResponse)
+    async fn setSimCardPower(&self, serial: i32, power_up: CardPowerState) -> binder::Result<()> {
+        entry_check!(&self, serial, setSimCardPowerResponse);
+        sharedmut!(&self).card_power_state = power_up;
+        okay!(&self, serial, setSimCardPowerResponse)
     }
     async fn setUiccSubscription(
         &self,
@@ -294,7 +310,7 @@ impl IRadioSimAsyncServer for RadioSim {
         _pin2: &str,
         _aid: &str,
     ) -> binder::Result<()> {
-        not_implemented!(&self, serial, supplyIccPuk2ForAppResponse, 0)
+        resp_err!(&self, serial, RadioError::PASSWORD_INCORRECT, supplyIccPuk2ForAppResponse, 0)
     }
     async fn supplyIccPukForApp(
         &self,
@@ -303,7 +319,7 @@ impl IRadioSimAsyncServer for RadioSim {
         _pin: &str,
         _aid: &str,
     ) -> binder::Result<()> {
-        not_implemented!(&self, serial, supplyIccPukForAppResponse, 0)
+        resp_err!(&self, serial, RadioError::PASSWORD_INCORRECT, supplyIccPukForAppResponse, 0)
     }
     async fn supplySimDepersonalization(
         &self,
@@ -330,6 +346,8 @@ impl IRadioSimAsyncServer for RadioSim {
         let mut shared = sharedmut!(&self);
         shared.response = Some(radio_response.clone());
         shared.indication = Some(radio_indication.clone());
+        shared.uiccapp_enabled = true;
+        shared.card_power_state = CardPowerState::POWER_UP;
         shared.notify_framework();
 
         Ok(())

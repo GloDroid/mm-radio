@@ -139,7 +139,8 @@ impl IRadioDataAsyncServer for RadioData {
         _slice_info: Option<&SliceInfo>,
         _match_all_rule_allowed: bool,
     ) -> binder::Result<()> {
-        not_implemented!(&self, serial, setupDataCallResponse, &Default::default())
+        entry_check!(&self, serial, setupDataCallResponse, &Default::default());
+        okay!(&self, serial, setupDataCallResponse, &Default::default())
     }
 
     async fn startHandover(&self, serial: i32, _call_id: i32) -> binder::Result<()> {

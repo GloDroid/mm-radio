@@ -6,7 +6,8 @@
  */
 
 use crate::utils::iradio::{
-    declare_async_iradio, entry_check, not_implemented, okay, resp, resp_ok, shared, sharedmut,
+    declare_async_iradio, entry_check, invalid_arg, not_implemented, okay, resp, resp_ok, shared,
+    sharedmut,
 };
 use android_hardware_radio::aidl::android::hardware::radio::RadioIndicationType::*;
 use android_hardware_radio_config::aidl::android::hardware::radio::config::{
@@ -28,6 +29,7 @@ pub struct RadioConfigShared {
     indication: Option<binder::Strong<dyn IRadioConfigIndication>>,
 
     slot_status: Vec<SimSlotStatus>,
+    slot_mapping: Vec<SlotPortMapping>,
 }
 
 #[derive(Default)]
@@ -45,9 +47,11 @@ impl IRadioConfigAsyncServer for RadioConfig {
     async fn setSimSlotsMapping(
         &self,
         serial: i32,
-        _smap: &[SlotPortMapping],
+        smap: &[SlotPortMapping],
     ) -> binder::Result<()> {
-        not_implemented!(&self, serial, setSimSlotsMappingResponse)
+        entry_check!(&self, serial, setSimSlotsMappingResponse);
+        sharedmut!(&self).slot_mapping = smap.to_vec();
+        okay!(&self, serial, setSimSlotsMappingResponse)
     }
     async fn getHalDeviceCapabilities(&self, serial: i32) -> binder::Result<()> {
         entry_check!(&self, serial, getHalDeviceCapabilitiesResponse, false);
@@ -71,6 +75,9 @@ impl IRadioConfigAsyncServer for RadioConfig {
         not_implemented!(&self, serial, setNumOfLiveModemsResponse)
     }
     async fn setPreferredDataModem(&self, serial: i32, modem_id: i8) -> binder::Result<()> {
+        if modem_id < 0 {
+            return invalid_arg!(&self, serial, setPreferredDataModemResponse);
+        }
         entry_check!(&self, serial, setPreferredDataModemResponse);
         info!("setPreferredDataModem: modem = {}", modem_id);
         okay!(&self, serial, setPreferredDataModemResponse)
@@ -89,7 +96,7 @@ impl IRadioConfigAsyncServer for RadioConfig {
             cardState: STATE_PRESENT,
             portInfo: vec![SimPortInfo {
                 iccId: "8938003992840681512F".to_string(),
-                logicalSlotId: 1,
+                logicalSlotId: 0,
                 portActive: true,
             }],
             ..Default::default()

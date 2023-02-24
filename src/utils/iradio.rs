@@ -102,6 +102,31 @@ macro_rules! not_implemented {
     }};
 }
 
+macro_rules! invalid_arg {
+    (&$self: ident, $serial: expr, $respfn: ident $(, $opt:expr)*) => {{
+        let shared = shared!(&$self);
+        shared
+            .response
+            .as_ref()
+            .unwrap()
+            .$respfn(&respond($serial, RadioError::INVALID_ARGUMENTS), $($opt), *)?;
+        Ok(())
+    }};
+}
+
+macro_rules! resp_err {
+    (&$self: ident, $serial: expr, $error: expr, $respfn: ident $(, $opt:expr)*) => {{
+        use crate::utils::iradio::respond;
+        let shared = shared!(&$self);
+        shared
+            .response
+            .as_ref()
+            .unwrap()
+            .$respfn(&respond($serial, $error), $($opt), *)?;
+        Ok(())
+    }};
+}
+
 macro_rules! okay {
     (&$self: ident, $serial: expr, $respfn: ident $(, $opt:expr)*) => {{
         use crate::utils::iradio::resp_ok;
@@ -128,7 +153,10 @@ macro_rules! err {
     }};
 }
 
-pub(crate) use {entry_check, err, function, ind, not_implemented, okay, resp, shared, sharedmut};
+pub(crate) use {
+    entry_check, err, function, ind, invalid_arg, not_implemented, okay, resp, resp_err, shared,
+    sharedmut,
+};
 
 macro_rules! declare_async_iradio {
     ($st:ty, $sti:ident, $stbn:ident) => {

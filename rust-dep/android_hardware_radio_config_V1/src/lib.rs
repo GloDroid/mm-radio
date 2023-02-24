@@ -1466,6 +1466,7 @@ pub mod aidl {
             #![rustfmt::skip]
             #[derive(Debug)]
             #[derive(Default)]
+            #[derive(Clone)]
             pub struct r#SlotPortMapping {
               pub r#physicalSlotId: i32,
               pub r#portId: i32,
