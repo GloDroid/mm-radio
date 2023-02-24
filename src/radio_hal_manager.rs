@@ -180,6 +180,8 @@ pub(crate) fn bind_modems(rhm: &Arc<RadioHalManager<'static>>) {
             RadioNetworkShared::unbind(&feb.radio_network_shared);
             RadioSimShared::unbind(&feb.radio_sim_shared);
             RadioVoiceShared::unbind(&feb.radio_voice_shared);
+
+            feb.modem_path.swap(&RefCell::new(None));
             info!("Modem \"{}\" unbound from slot \"{}\"", path, slot);
         },
     };
