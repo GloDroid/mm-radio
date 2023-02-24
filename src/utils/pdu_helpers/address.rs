@@ -34,7 +34,7 @@ pub(crate) fn address_to_pdu(utf8: &str, is_smsc: bool) -> Result<String, io::Er
             result.push_str(&format!("{:02X}", utf8.chars().count()));
         }
         let ext_ton_npi: u8 = if international { 0b1001_0001 } else { 0b1010_0001 };
-        result.push_str(&format!("{:02X}", ext_ton_npi));
+        result.push_str(&format!("{ext_ton_npi:02X}"));
         result.push_str(&pdu);
     }
 
@@ -73,7 +73,7 @@ pub(crate) fn address_from_pdu(pdu: &str, is_smsc: bool) -> Result<(String, usiz
     } else {
         let utf8 = address_numeric_from_pdu(pdu_number)?;
         if toa == toa_international {
-            format!("+{}", utf8)
+            format!("+{utf8}")
         } else {
             utf8
         }

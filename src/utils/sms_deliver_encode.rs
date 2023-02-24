@@ -24,7 +24,7 @@ pub(crate) fn sms_deliver_encode(address: &str, text: &str, timestamp: &str) -> 
     pdu.push_str(&Timestamp::from_mm_format(timestamp).to_pdu());
     // User data length
     let text_len_bytes = std::cmp::min(text.chars().count() * 2, 254);
-    pdu.push_str(&format!("{:02X}", text_len_bytes));
+    pdu.push_str(&format!("{text_len_bytes:02X}"));
     // User data
     for c in text.chars() {
         pdu.push_str(&format!("{:04X}", c as u16));

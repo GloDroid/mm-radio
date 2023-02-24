@@ -278,7 +278,7 @@ impl IRadioVoiceAsyncServer for RadioVoice {
 
         let shared = shared!(&self);
         let call = shared.calls.get(&path.to_string());
-        if let None = call {
+        if call.is_none() {
             drop(shared);
             error!("Failed to find call: {:?}", path);
             return resp_err!(&self, serial, RadioError::INTERNAL_ERR, dialResponse);
