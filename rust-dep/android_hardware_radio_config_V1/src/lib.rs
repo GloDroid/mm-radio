@@ -1369,6 +1369,7 @@ pub mod aidl {
                     pub mod SimPortInfo {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
+            #[derive(Clone)]
             #[derive(Debug)]
             #[derive(Default)]
             pub struct r#SimPortInfo {
@@ -1414,6 +1415,7 @@ pub mod aidl {
                     pub mod SimSlotStatus {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
+            #[derive(Clone)]
             #[derive(Debug)]
             #[derive(Default)]
             pub struct r#SimSlotStatus {

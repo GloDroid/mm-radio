@@ -147,39 +147,45 @@ impl IRadioSimAsyncServer for RadioSim {
     }
     async fn getIccCardStatus(&self, serial: i32) -> binder::Result<()> {
         entry_check!(&self, serial, getIccCardStatusResponse, &def());
-        let shared = shared!(&self);
-        if shared.sim_proxy.is_none() {
-            return okay!(&self, serial, getIccCardStatusResponse, &def());
-        }
-        let sim_proxy = shared.sim_proxy.as_ref().unwrap();
 
-        let cs = CardStatus {
-            cardState: if sim_proxy.active().await.unwrap() { STATE_PRESENT } else { STATE_ABSENT },
-            universalPinState: PinState::UNKNOWN,
-            applications: if shared.card_power_state == CardPowerState::POWER_UP {
-                vec![AppStatus {
-                    appType: APP_TYPE_USIM,
-                    appState: APP_STATE_READY,
-                    pin1: PinState::UNKNOWN,
-                    pin2: PinState::UNKNOWN,
-                    ..Default::default()
-                }]
-            } else {
-                vec![]
-            },
-            gsmUmtsSubscriptionAppIndex: 0,
-            cdmaSubscriptionAppIndex: -1,
-            imsSubscriptionAppIndex: -1,
-            iccid: sim_proxy.sim_identifier().await.unwrap().to_string(),
-            eid: sim_proxy.eid().await.unwrap(),
-            ..Default::default()
+        let cs = {
+            let shared = shared!(&self);
+            if shared.sim_proxy.is_none() {
+                drop(shared);
+                return okay!(&self, serial, getIccCardStatusResponse, &def());
+            }
+            let sim_proxy = shared.sim_proxy.as_ref().unwrap();
+            CardStatus {
+                cardState: if sim_proxy.active().await.unwrap() {
+                    STATE_PRESENT
+                } else {
+                    STATE_ABSENT
+                },
+                universalPinState: PinState::UNKNOWN,
+                applications: if shared.card_power_state == CardPowerState::POWER_UP {
+                    vec![AppStatus {
+                        appType: APP_TYPE_USIM,
+                        appState: APP_STATE_READY,
+                        pin1: PinState::UNKNOWN,
+                        pin2: PinState::UNKNOWN,
+                        ..Default::default()
+                    }]
+                } else {
+                    vec![]
+                },
+                gsmUmtsSubscriptionAppIndex: 0,
+                cdmaSubscriptionAppIndex: -1,
+                imsSubscriptionAppIndex: -1,
+                iccid: sim_proxy.sim_identifier().await.unwrap().to_string(),
+                eid: sim_proxy.eid().await.unwrap(),
+                ..Default::default()
+            }
         };
         okay!(&self, serial, getIccCardStatusResponse, &cs)
     }
     async fn getImsiForApp(&self, serial: i32, _aid: &str) -> binder::Result<()> {
         entry_check!(&self, serial, getImsiForAppResponse, "");
-        let shared = shared!(&self);
-        let imsi = shared.sim_proxy.as_ref().unwrap().imsi().await.unwrap();
+        let imsi = shared!(&self).sim_proxy.as_ref().unwrap().imsi().await.unwrap();
         okay!(&self, serial, getImsiForAppResponse, imsi.as_str())
     }
     async fn getSimPhonebookCapacity(&self, serial: i32) -> binder::Result<()> {
@@ -205,8 +211,7 @@ impl IRadioSimAsyncServer for RadioSim {
     async fn iccOpenLogicalChannel(&self, serial: i32, _aid: &str, _p2: i32) -> binder::Result<()> {
         entry_check!(&self, serial, iccOpenLogicalChannelResponse, 0, &[]);
         sharedmut!(&self).channel += 1;
-        let shared = shared!(&self);
-        okay!(&self, serial, iccOpenLogicalChannelResponse, shared.channel, &[])
+        okay!(&self, serial, iccOpenLogicalChannelResponse, shared!(&self).channel, &[])
     }
     async fn iccTransmitApduBasicChannel(
         &self,

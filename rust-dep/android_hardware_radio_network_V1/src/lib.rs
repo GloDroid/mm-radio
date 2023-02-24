@@ -335,7 +335,7 @@ pub mod aidl {
                     pub mod CdmaSignalStrength {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
-            #[derive(Debug)]
+            #[derive(Clone, Debug)]
             pub struct r#CdmaSignalStrength {
               pub r#dbm: i32,
               pub r#ecio: i32,
@@ -1664,7 +1664,7 @@ pub mod aidl {
                     pub mod EvdoSignalStrength {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
-            #[derive(Debug)]
+            #[derive(Clone, Debug)]
             pub struct r#EvdoSignalStrength {
               pub r#dbm: i32,
               pub r#ecio: i32,
@@ -1743,7 +1743,7 @@ pub mod aidl {
                     pub mod GsmSignalStrength {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
-            #[derive(Debug)]
+            #[derive(Clone, Debug)]
             pub struct r#GsmSignalStrength {
               pub r#signalStrength: i32,
               pub r#bitErrorRate: i32,
@@ -6710,7 +6710,7 @@ pub mod aidl {
                     pub mod NrSignalStrength {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
-            #[derive(Debug)]
+            #[derive(Clone, Debug)]
             pub struct r#NrSignalStrength {
               pub r#ssRsrp: i32,
               pub r#ssRsrq: i32,
@@ -7463,7 +7463,7 @@ pub mod aidl {
                     pub mod SignalStrength {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
-            #[derive(Debug, Default)]
+            #[derive(Clone, Debug, Default)]
             pub struct r#SignalStrength {
               pub r#gsm: crate::mangled::_7_android_8_hardware_5_radio_7_network_17_GsmSignalStrength,
               pub r#cdma: crate::mangled::_7_android_8_hardware_5_radio_7_network_18_CdmaSignalStrength,
@@ -7668,7 +7668,7 @@ pub mod aidl {
                     pub mod TdscdmaSignalStrength {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
-            #[derive(Debug)]
+            #[derive(Clone, Debug)]
             pub struct r#TdscdmaSignalStrength {
               pub r#signalStrength: i32,
               pub r#bitErrorRate: i32,
@@ -7774,7 +7774,7 @@ pub mod aidl {
                     pub mod WcdmaSignalStrength {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
-            #[derive(Debug)]
+            #[derive(Clone, Debug)]
             pub struct r#WcdmaSignalStrength {
               pub r#signalStrength: i32,
               pub r#bitErrorRate: i32,

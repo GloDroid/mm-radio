@@ -2703,7 +2703,7 @@ pub mod aidl {
                     pub mod RadioCapability {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
-            #[derive(Debug)]
+            #[derive(Debug, Clone)]
             pub struct r#RadioCapability {
               pub r#session: i32,
               pub r#phase: i32,

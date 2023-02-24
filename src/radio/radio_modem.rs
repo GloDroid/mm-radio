@@ -134,12 +134,14 @@ impl IRadioModemAsyncServer for RadioModem {
     }
     async fn getDeviceIdentity(&self, serial: i32) -> binder::Result<()> {
         entry_check!(&self, serial, getDeviceIdentityResponse, "", "", "", "");
-        let shared = shared!(&self);
-        if shared.sim_proxy.is_none() {
-            return okay!(&self, serial, getDeviceIdentityResponse, "", "", "", "");
-        }
-        let sim_proxy = shared.sim_proxy.as_ref().unwrap();
-        let imei = sim_proxy.sim_identifier().await.unwrap();
+        let imei = {
+            let shared = shared!(&self);
+            if shared.sim_proxy.is_none() {
+                return okay!(&self, serial, getDeviceIdentityResponse, "", "", "", "");
+            }
+            let sim_proxy = shared.sim_proxy.as_ref().unwrap();
+            sim_proxy.sim_identifier().await.unwrap()
+        };
         okay!(&self, serial, getDeviceIdentityResponse, imei.as_str(), "00", "00", "00")
     }
 
@@ -179,8 +181,8 @@ impl IRadioModemAsyncServer for RadioModem {
     }
     async fn getRadioCapability(&self, serial: i32) -> binder::Result<()> {
         entry_check!(&self, serial, getRadioCapabilityResponse, &def());
-        let shared = shared!(&self);
-        okay!(&self, serial, getRadioCapabilityResponse, &shared.radio_capability)
+        let rc = shared!(&self).radio_capability.clone();
+        okay!(&self, serial, getRadioCapabilityResponse, &rc)
     }
     async fn nvReadItem(&self, serial: i32, _: NvItem) -> binder::Result<()> {
         not_implemented!(&self, serial, nvReadItemResponse, "")

@@ -41,8 +41,8 @@ pub struct RadioConfig {
 impl IRadioConfigAsyncServer for RadioConfig {
     async fn getSimSlotsStatus(&self, serial: i32) -> binder::Result<()> {
         entry_check!(&self, serial, getSimSlotsStatusResponse, Default::default());
-        let shared = shared!(&self);
-        okay!(&self, serial, getSimSlotsStatusResponse, &shared.slot_status)
+        let slot_status = shared!(&self).slot_status.clone();
+        okay!(&self, serial, getSimSlotsStatusResponse, &slot_status)
     }
     async fn setSimSlotsMapping(
         &self,

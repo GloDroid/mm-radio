@@ -180,15 +180,17 @@ impl IRadioNetworkAsyncServer for RadioNetwork {
 
     async fn getCellInfoList(&self, serial: i32) -> binder::Result<()> {
         entry_check!(&self, serial, getCellInfoListResponse, def());
-        let shared = shared!(&self);
-        let cil = [CellInfo {
-            registered: true,
-            connectionStatus: CellConnectionStatus::PRIMARY_SERVING,
-            ratSpecificInfo: Lte(CellInfoLte {
-                cellIdentityLte: get_fake_cell_identity_lte(),
-                signalStrengthLte: shared.signal_strength.lte.clone(),
-            }),
-        }];
+        let cil = {
+            let shared = shared!(&self);
+            [CellInfo {
+                registered: true,
+                connectionStatus: CellConnectionStatus::PRIMARY_SERVING,
+                ratSpecificInfo: Lte(CellInfoLte {
+                    cellIdentityLte: get_fake_cell_identity_lte(),
+                    signalStrengthLte: shared.signal_strength.lte.clone(),
+                }),
+            }]
+        };
         okay!(&self, serial, getCellInfoListResponse, &cil)
     }
 
@@ -213,13 +215,14 @@ impl IRadioNetworkAsyncServer for RadioNetwork {
         let modem_3gpp_proxy = shared.modem_3gpp_proxy.as_ref().unwrap();
         let op_name = modem_3gpp_proxy.operator_name().await.unwrap();
         let op_code = modem_3gpp_proxy.operator_code().await.unwrap();
+        drop(shared);
         okay!(&self, serial, getOperatorResponse, op_name.as_str(), "", op_code.as_str())
     }
 
     async fn getSignalStrength(&self, serial: i32) -> binder::Result<()> {
         entry_check!(&self, serial, getSignalStrengthResponse, &def());
-        let shared = shared!(&self);
-        okay!(&self, serial, getSignalStrengthResponse, &shared.signal_strength)
+        let ss = shared!(&self).signal_strength.clone();
+        okay!(&self, serial, getSignalStrengthResponse, &ss)
     }
 
     async fn getSystemSelectionChannels(&self, serial: i32) -> binder::Result<()> {
@@ -358,14 +361,16 @@ impl IRadioNetworkAsyncServer for RadioNetwork {
         }
 
         entry_check!(&self, serial, setSignalStrengthReportingCriteriaResponse);
-        let shared = shared!(&self);
-        // Thresholds-based reporting doesn't work on PP:
-        // let thresholds = HashMap::from([
-        //     ("rssi-threshold", 1u32.into()),
-        //     ("error-rate-threshold", false.into()),
-        // ]);
-        // shared.signal_proxy.as_ref().unwrap().setup_thresholds(thresholds).await.unwrap();
-        shared.signal_proxy.as_ref().unwrap().setup(10).await.unwrap();
+        {
+            let shared = shared!(&self);
+            // Thresholds-based reporting doesn't work on PP:
+            // let thresholds = HashMap::from([
+            //     ("rssi-threshold", 1u32.into()),
+            //     ("error-rate-threshold", false.into()),
+            // ]);
+            // shared.signal_proxy.as_ref().unwrap().setup_thresholds(thresholds).await.unwrap();
+            shared.signal_proxy.as_ref().unwrap().setup(10).await.unwrap();
+        }
         okay!(&self, serial, setSignalStrengthReportingCriteriaResponse)
     }
 

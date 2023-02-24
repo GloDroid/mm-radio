@@ -40,7 +40,10 @@ struct Call {
 
 impl Drop for Call {
     fn drop(&mut self) {
-        block_on(self.stop_monitoring.send(())).unwrap();
+        let stop = self.stop_monitoring.clone();
+        spawn(async move {
+            stop.send(()).await.unwrap_or_default();
+        });
     }
 }
 
@@ -83,6 +86,7 @@ impl Call {
 
         let mm_call_c = call.proxy.clone();
         let shared = shared_in.clone();
+        let path = path.to_string();
         spawn(async move {
             let mut call_state = mm_call_c.receive_state_changed().await;
             let mut stop = stop_monitoring_rx;
@@ -228,26 +232,32 @@ impl RadioVoiceShared {
 impl IRadioVoiceAsyncServer for RadioVoice {
     async fn acceptCall(&self, serial: i32) -> binder::Result<()> {
         entry_check!(&self, serial, acceptCallResponse);
-        let shared = shared!(&self);
-        let call = shared.find_call(mm_call_state::RINGING_IN).await;
-        if let Some(call) = call {
-            call.proxy.accept().await.unwrap();
+        {
+            let shared = shared!(&self);
+            let call = shared.find_call(mm_call_state::RINGING_IN).await;
+            if let Some(call) = call {
+                call.proxy.accept().await.unwrap();
+            }
         }
         okay!(&self, serial, acceptCallResponse)
     }
     async fn cancelPendingUssd(&self, serial: i32) -> binder::Result<()> {
         entry_check!(&self, serial, cancelPendingUssdResponse);
-        let shared = shared!(&self);
-        let ussd_proxy = shared.ussd_proxy.as_ref().unwrap();
-        ussd_proxy.cancel().await.unwrap_or_default();
+        {
+            let shared = shared!(&self);
+            let ussd_proxy = shared.ussd_proxy.as_ref().unwrap();
+            ussd_proxy.cancel().await.unwrap_or_default();
+        }
         okay!(&self, serial, cancelPendingUssdResponse)
     }
     async fn conference(&self, serial: i32) -> binder::Result<()> {
         entry_check!(&self, serial, conferenceResponse);
-        let shared = shared!(&self);
-        let call = shared.find_call(mm_call_state::HELD).await;
-        if let Some(call) = call {
-            call.proxy.join_multiparty().await.unwrap();
+        {
+            let shared = shared!(&self);
+            let call = shared.find_call(mm_call_state::HELD).await;
+            if let Some(call) = call {
+                call.proxy.join_multiparty().await.unwrap();
+            }
         }
         okay!(&self, serial, conferenceResponse)
     }
@@ -263,13 +273,21 @@ impl IRadioVoiceAsyncServer for RadioVoice {
         RadioVoiceShared::add_call(&self.shared, path.to_string()).await;
 
         let shared = shared!(&self);
-        let call = shared.calls.get(&path.to_string()).unwrap();
+        let call = shared.calls.get(&path.to_string());
+        if let None = call {
+            drop(shared);
+            error!("Failed to find call: {:?}", path);
+            return resp_err!(&self, serial, RadioError::INTERNAL_ERR, dialResponse);
+        }
+        let call = call.unwrap();
         let result = call.proxy.start().await;
         if let Err(e) = result {
+            drop(shared);
             error!("Failed to start call: {:?}", e);
             return resp_err!(&self, serial, RadioError::INTERNAL_ERR, dialResponse);
         }
 
+        drop(shared);
         info!("Dialing: {:?}", path);
         okay!(&self, serial, dialResponse)
     }
@@ -290,8 +308,7 @@ impl IRadioVoiceAsyncServer for RadioVoice {
     }
     async fn explicitCallTransfer(&self, serial: i32) -> binder::Result<()> {
         entry_check!(&self, serial, explicitCallTransferResponse);
-        let shared = shared!(&self);
-        let result = shared.voice_proxy.as_ref().unwrap().transfer().await;
+        let result = shared!(&self).voice_proxy.as_ref().unwrap().transfer().await;
         if let Err(e) = result {
             error!("transfer failed: {}", e);
             return resp_err!(
@@ -312,8 +329,8 @@ impl IRadioVoiceAsyncServer for RadioVoice {
     }
     async fn getCallWaiting(&self, serial: i32, _service_class: i32) -> binder::Result<()> {
         entry_check!(&self, serial, getCallWaitingResponse, false, 0);
-        let shared = shared!(&self);
-        let waiting = shared.voice_proxy.as_ref().unwrap().call_waiting_query().await.unwrap();
+        let waiting =
+            shared!(&self).voice_proxy.as_ref().unwrap().call_waiting_query().await.unwrap();
         okay!(&self, serial, getCallWaitingResponse, waiting, 0)
     }
     async fn getClip(&self, serial: i32) -> binder::Result<()> {
@@ -379,17 +396,18 @@ impl IRadioVoiceAsyncServer for RadioVoice {
         entry_check!(&self, serial, hangupConnectionResponse);
         let path = format!("/org/freedesktop/ModemManager1/Call/{}", gsm_index - 1);
         info!("hangup path: {}", path);
-        let shared = shared!(&self);
-        let call = shared.calls.get(&path);
-        if let Some(call) = call {
-            call.proxy.hangup().await.unwrap();
+        {
+            let shared = shared!(&self);
+            let call = shared.calls.get(&path);
+            if let Some(call) = call {
+                call.proxy.hangup().await.unwrap();
+            }
         }
         okay!(&self, serial, hangupConnectionResponse)
     }
     async fn hangupForegroundResumeBackground(&self, serial: i32) -> binder::Result<()> {
         entry_check!(&self, serial, hangupForegroundResumeBackgroundResponse);
-        let shared = shared!(&self);
-        let result = shared.voice_proxy.as_ref().unwrap().hangup_and_accept().await;
+        let result = shared!(&self).voice_proxy.as_ref().unwrap().hangup_and_accept().await;
         if let Err(e) = result {
             error!("hangup_and_accept failed: {}", e);
             return resp_err!(
@@ -403,8 +421,7 @@ impl IRadioVoiceAsyncServer for RadioVoice {
     }
     async fn hangupWaitingOrBackground(&self, serial: i32) -> binder::Result<()> {
         entry_check!(&self, serial, hangupWaitingOrBackgroundResponse);
-        let shared = shared!(&self);
-        shared.voice_proxy.as_ref().unwrap().hangup_all().await.unwrap();
+        shared!(&self).voice_proxy.as_ref().unwrap().hangup_all().await.unwrap();
         okay!(&self, serial, hangupWaitingOrBackgroundResponse)
     }
     async fn isVoNrEnabled(&self, serial: i32) -> binder::Result<()> {
@@ -413,14 +430,16 @@ impl IRadioVoiceAsyncServer for RadioVoice {
     async fn rejectCall(&self, serial: i32) -> binder::Result<()> {
         entry_check!(&self, serial, rejectCallResponse);
         /* "Send UDUB (user determined user busy) to ringing or waiting call answer)" */
-        let shared = shared!(&self);
-        let call = shared.find_call(VoiceCall::STATE_INCOMING).await;
-        if let Some(call) = call {
-            call.proxy.hangup().await.unwrap();
-        }
-        let call = shared.find_call(VoiceCall::STATE_WAITING).await;
-        if let Some(call) = call {
-            call.proxy.hangup().await.ok();
+        {
+            let shared = shared!(&self);
+            let call = shared.find_call(VoiceCall::STATE_INCOMING).await;
+            if let Some(call) = call {
+                call.proxy.hangup().await.unwrap();
+            }
+            let call = shared.find_call(VoiceCall::STATE_WAITING).await;
+            if let Some(call) = call {
+                call.proxy.hangup().await.ok();
+            }
         }
 
         okay!(&self, serial, rejectCallResponse)
@@ -442,57 +461,63 @@ impl IRadioVoiceAsyncServer for RadioVoice {
     }
     async fn sendDtmf(&self, serial: i32, s: &str) -> binder::Result<()> {
         entry_check!(&self, serial, sendDtmfResponse);
-        let shared = shared!(&self);
-        let call = shared.find_call(VoiceCall::STATE_ACTIVE).await;
-        if let Some(call) = call {
-            call.proxy.send_dtmf(s).await.ok();
+        {
+            let shared = shared!(&self);
+            let call = shared.find_call(VoiceCall::STATE_ACTIVE).await;
+            if let Some(call) = call {
+                call.proxy.send_dtmf(s).await.ok();
+            }
         }
         okay!(&self, serial, sendDtmfResponse)
     }
     async fn sendUssd(&self, serial: i32, ussd: &str) -> binder::Result<()> {
         entry_check!(&self, serial, sendUssdResponse);
-        let shared = shared!(&self);
-        let ussd_proxy = shared.ussd_proxy.as_ref().unwrap();
-        let state = ussd_proxy.state().await.unwrap();
-        let result = if state == mm_modem_3gpp_ussd_session_state::USER_RESPONSE {
-            info!("Respond ussd: {}", ussd);
-            ussd_proxy.respond(ussd).await
-        } else {
-            info!("Initiate ussd: {}", ussd);
-            ussd_proxy.initiate(ussd).await
-        };
-        if let Err(e) = result {
-            error!("sendUssd failed: {}", e);
-            return resp_err!(
-                &self,
-                serial,
-                RadioError::INTERNAL_ERR,
-                hangupForegroundResumeBackgroundResponse
-            );
-        }
-        let response = result.unwrap();
-        // Wait 100ms for the state to change
-        async_std::task::sleep(std::time::Duration::from_millis(100)).await;
-        let state = ussd_proxy.state().await.unwrap();
-        drop(shared);
+        {
+            let shared = shared!(&self);
+            let ussd_proxy = shared.ussd_proxy.as_ref().unwrap();
+            let state = ussd_proxy.state().await.unwrap();
+            let result = if state == mm_modem_3gpp_ussd_session_state::USER_RESPONSE {
+                info!("Respond ussd: {}", ussd);
+                ussd_proxy.respond(ussd).await
+            } else {
+                info!("Initiate ussd: {}", ussd);
+                ussd_proxy.initiate(ussd).await
+            };
+            if let Err(e) = result {
+                error!("sendUssd failed: {}", e);
+                return resp_err!(
+                    &self,
+                    serial,
+                    RadioError::INTERNAL_ERR,
+                    hangupForegroundResumeBackgroundResponse
+                );
+            }
+            let response = result.unwrap();
+            // Wait 100ms for the state to change
+            async_std::task::sleep(std::time::Duration::from_millis(100)).await;
+            let state = ussd_proxy.state().await.unwrap();
+            drop(shared);
 
-        let mode_type = match state {
-            mm_modem_3gpp_ussd_session_state::IDLE => UssdModeType::NOTIFY,
-            mm_modem_3gpp_ussd_session_state::USER_RESPONSE => UssdModeType::REQUEST,
-            _ => UssdModeType::LOCAL_CLIENT,
-        };
-        info!("sendUssd state: {:?} response: {}", state, response);
-        ind!(&self).onUssd(RadioIndicationType::UNSOLICITED, mode_type, &response)?;
+            let mode_type = match state {
+                mm_modem_3gpp_ussd_session_state::IDLE => UssdModeType::NOTIFY,
+                mm_modem_3gpp_ussd_session_state::USER_RESPONSE => UssdModeType::REQUEST,
+                _ => UssdModeType::LOCAL_CLIENT,
+            };
+            info!("sendUssd state: {:?} response: {}", state, response);
+            ind!(&self).onUssd(RadioIndicationType::UNSOLICITED, mode_type, &response)?;
+        }
         okay!(&self, serial, sendUssdResponse)
     }
     async fn separateConnection(&self, serial: i32, gsm_index: i32) -> binder::Result<()> {
         entry_check!(&self, serial, separateConnectionResponse);
-        let shared = shared!(&self);
-        let path = format!("/org/freedesktop/ModemManager1/Call/{}", gsm_index - 1);
-        info!("separateConnection path: {}", path);
-        let call = shared.calls.get(&path);
-        if let Some(call) = call {
-            call.proxy.leave_multiparty().await.unwrap();
+        {
+            let shared = shared!(&self);
+            let path = format!("/org/freedesktop/ModemManager1/Call/{}", gsm_index - 1);
+            info!("separateConnection path: {}", path);
+            let call = shared.calls.get(&path);
+            if let Some(call) = call {
+                call.proxy.leave_multiparty().await.unwrap();
+            }
         }
         okay!(&self, serial, separateConnectionResponse)
     }
@@ -510,9 +535,11 @@ impl IRadioVoiceAsyncServer for RadioVoice {
         _svc_class: i32,
     ) -> binder::Result<()> {
         entry_check!(&self, serial, setCallWaitingResponse);
-        let shared = shared!(&self);
-        let vp = shared.voice_proxy.as_ref().unwrap();
-        vp.call_waiting_setup(enable).await.unwrap();
+        {
+            let shared = shared!(&self);
+            let vp = shared.voice_proxy.as_ref().unwrap();
+            vp.call_waiting_setup(enable).await.unwrap();
+        }
         okay!(&self, serial, setCallWaitingResponse)
     }
     async fn setClir(&self, serial: i32, _status: i32) -> binder::Result<()> {
@@ -532,10 +559,12 @@ impl IRadioVoiceAsyncServer for RadioVoice {
     }
     async fn startDtmf(&self, serial: i32, s: &str) -> binder::Result<()> {
         entry_check!(&self, serial, startDtmfResponse);
-        let shared = shared!(&self);
-        let call = shared.find_call(VoiceCall::STATE_ACTIVE).await;
-        if let Some(call) = call {
-            call.proxy.send_dtmf(s).await.unwrap();
+        {
+            let shared = shared!(&self);
+            let call = shared.find_call(VoiceCall::STATE_ACTIVE).await;
+            if let Some(call) = call {
+                call.proxy.send_dtmf(s).await.unwrap();
+            }
         }
         okay!(&self, serial, startDtmfResponse)
     }
@@ -545,17 +574,19 @@ impl IRadioVoiceAsyncServer for RadioVoice {
     }
     async fn switchWaitingOrHoldingAndActive(&self, serial: i32) -> binder::Result<()> {
         entry_check!(&self, serial, switchWaitingOrHoldingAndActiveResponse);
-        let shared = shared!(&self);
-        let vp = shared.voice_proxy.as_ref().unwrap();
-        let result = vp.hold_and_accept().await;
-        if let Err(e) = result {
-            error!("hold_and_accept failed: {}", e);
-            return resp_err!(
-                &self,
-                serial,
-                RadioError::INTERNAL_ERR,
-                hangupForegroundResumeBackgroundResponse
-            );
+        {
+            let shared = shared!(&self);
+            let vp = shared.voice_proxy.as_ref().unwrap();
+            let result = vp.hold_and_accept().await;
+            if let Err(e) = result {
+                error!("hold_and_accept failed: {}", e);
+                return resp_err!(
+                    &self,
+                    serial,
+                    RadioError::INTERNAL_ERR,
+                    hangupForegroundResumeBackgroundResponse
+                );
+            }
         }
         okay!(&self, serial, switchWaitingOrHoldingAndActiveResponse)
     }
