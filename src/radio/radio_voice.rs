@@ -100,8 +100,12 @@ impl Call {
                     state = call_state.next().fuse() => {
                         let new_state = state.unwrap().get().await.unwrap();
                         info!("Call state: {}", new_state);
-                        let shared = shared.read().await;
+                        let mut shared = shared.write().await;
                         shared.notify_call_state_changed();
+                        if new_state == mm_call_state::TERMINATED {
+                            shared.calls.remove(path.as_str());
+                            break;
+                        }
                     },
                     _ = stop.next().fuse() => break,
                     complete => break,
