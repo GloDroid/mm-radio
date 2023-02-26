@@ -81,7 +81,7 @@ pub(crate) fn sms_submit_decode(in_pdu: &str) -> Option<(String /*number*/, Stri
         let len = div_round_up(tp_udl * 7, 8) * 2;
         let tp_user_data = &pdu[..len];
         message = gsm7_pdu_to_string(tp_user_data).unwrap();
-        message = message[..tp_udl].to_string();
+        message = message.chars().take(tp_udl).collect();
         pdu = &pdu[len..];
     } else if encoding_is_ucs2 {
         for _ in 0..tp_udl / 2 {
@@ -136,6 +136,10 @@ mod tests {
             sms_submit_decode("01000A812143658709000007C434393D469701").unwrap();
         assert_eq!(destination, "1234567890");
         assert_eq!(message, "Didiche");
+
+        let (destination, message) = sms_submit_decode("0100038188F8000002C802").unwrap();
+        assert_eq!(destination, "888");
+        assert_eq!(message, "Hé");
 
         /* VTS data, TODO: FIX */
         // let (destination, message) =
