@@ -33,11 +33,13 @@ pub(crate) fn sms_submit_decode(in_pdu: &str) -> Option<(String /*number*/, Stri
     let _tp_rp = (first_octet & 0b10000000) >> 7 != 0;
 
     if tp_mti != 0b00000001 {
-        panic!("Not a SMS-SUBMIT");
+        error!("Not a SMS-SUBMIT");
+        return None;
     }
 
     if tp_udhi {
-        panic!("User data header not supported");
+        error!("User data header not supported");
+        return None;
     }
 
     pdu = &pdu[2..];
@@ -96,11 +98,13 @@ pub(crate) fn sms_submit_decode(in_pdu: &str) -> Option<(String /*number*/, Stri
             pdu = &pdu[4..];
         }
     } else {
-        panic!("Unsupported encoding");
+        error!("Unsupported encoding");
+        return None;
     }
 
     if !pdu.is_empty() {
-        panic!("PDU not fully parsed");
+        error!("PDU not fully parsed");
+        return None;
     }
 
     Some((destination, message))
