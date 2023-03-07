@@ -205,7 +205,17 @@ impl IRadioNetworkAsyncServer for RadioNetwork {
 
     async fn getDataRegistrationState(&self, serial: i32) -> binder::Result<()> {
         entry_check!(&self, serial, getDataRegistrationStateResponse, &def());
-        okay!(&self, serial, getDataRegistrationStateResponse, &def())
+        let rsr = RegStateResult {
+            regState: RegState::REG_HOME,
+            rat: RadioTechnology::LTE,
+            cellIdentity: CellIdentity::Lte(get_fake_cell_identity_lte()),
+            registeredPlmn: "25501".to_string(),
+            accessTechnologySpecificInfo: AccessTechnologySpecificInfo::EutranInfo(
+                Default::default(),
+            ),
+            ..Default::default()
+        };
+        okay!(&self, serial, getDataRegistrationStateResponse, &rsr)
     }
 
     async fn getImsRegistrationState(&self, serial: i32) -> binder::Result<()> {

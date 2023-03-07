@@ -60,3 +60,12 @@ pub(crate) mod mm_sms_state {
     pub(crate) const SENDING: u32 = 4;
     pub(crate) const SENT: u32 = 5;
 }
+
+pub(crate) mod mm_bearer_ip_family {
+    pub(crate) const NONE: u32 = 0;
+    pub(crate) const IPV4: u32 = 1 << 0;
+    pub(crate) const IPV6: u32 = 1 << 1;
+    pub(crate) const IPV4V6: u32 = 1 << 2;
+    pub(crate) const NON_IP: u32 = 1 << 3;
+    pub(crate) const ANY: u32 = 0xFFFFFFF7;
+}

@@ -111,7 +111,7 @@ impl RadioModemShared {
         }
         let ind = self.indication.as_ref().ok_or(Error::noneopt())?;
         let state = self.modem_proxy.as_ref().ok_or(Error::noneopt())?.state().await?;
-        let enabled = state == mm_modem_state::ENABLED || state == mm_modem_state::REGISTERED;
+        let enabled = state > mm_modem_state::ENABLED;
         ind.radioStateChanged(
             RadioIndicationType::UNSOLICITED,
             if enabled { RadioState::ON } else { RadioState::OFF },

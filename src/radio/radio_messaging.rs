@@ -135,8 +135,9 @@ impl RadioMessagingShared {
 
     pub(crate) fn unbind(shared_in: &Arc<RwLock<RadioMessagingShared>>) -> Result<(), Error> {
         let mut shared = block_on(shared_in.write());
-        shared.modem_bound = false;
         shared.modem_proxy = None;
+        shared.messaging_proxy = None;
+        shared.modem_bound = false;
         Ok(())
     }
 
