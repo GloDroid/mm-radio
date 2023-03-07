@@ -3,7 +3,7 @@ cargo-features = ["different-binary-name"]
 
 [package]
 name = "mm-radio-service"
-version = "0.0.1"
+version = "0.0.2"
 edition = "2021"
 
 [[bin]]
