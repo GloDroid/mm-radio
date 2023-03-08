@@ -7,9 +7,12 @@
 
 use crate::{
     mm_zbus::{mm_modem_proxy::ModemProxy, mm_sim_proxy::SimProxy},
-    utils::iradio::{
-        declare_async_iradio, def, entry_check, invalid_arg, not_implemented, okay, resp_err,
-        shared, sharedmut,
+    utils::{
+        error::Error,
+        iradio::{
+            declare_async_iradio, def, entry_check, invalid_arg, not_implemented, okay, resp_err,
+            shared, sharedmut,
+        },
     },
 };
 use android_hardware_radio::aidl::android::hardware::radio::{
@@ -50,7 +53,10 @@ pub struct RadioSim {
 }
 
 impl RadioSimShared {
-    pub fn bind(shared_in: &Arc<RwLock<RadioSimShared>>, modem_proxy: &ModemProxy<'static>) {
+    pub(crate) fn bind(
+        shared_in: &Arc<RwLock<RadioSimShared>>,
+        modem_proxy: &ModemProxy<'static>,
+    ) -> Result<(), Error> {
         /* Setup shared structure */
         {
             let mut shared = block_on(shared_in.write());
@@ -59,19 +65,18 @@ impl RadioSimShared {
             let conn = modem_proxy.connection();
             let sim_path = block_on(modem_proxy.sim());
             if let Ok(sim_path) = sim_path {
-                shared.sim_proxy = Some(
-                    block_on(SimProxy::builder(conn).path(sim_path).unwrap().build()).unwrap(),
-                );
+                shared.sim_proxy = Some(block_on(SimProxy::builder(conn).path(sim_path)?.build())?);
             }
         }
         /* Notify framework */
         {
             let shared = block_on(shared_in.read());
-            shared.notify_framework();
+            shared.notify_framework()?;
         }
+        Ok(())
     }
 
-    pub fn unbind(shared_in: &Arc<RwLock<RadioSimShared>>) {
+    pub(crate) fn unbind(shared_in: &Arc<RwLock<RadioSimShared>>) -> Result<(), Error> {
         {
             let mut shared = block_on(shared_in.write());
             shared.modem_proxy = None;
@@ -79,20 +84,22 @@ impl RadioSimShared {
             shared.modem_bound = false;
         }
         let shared = block_on(shared_in.read());
-        shared.notify_framework();
+        shared.notify_framework()?;
+        Ok(())
     }
 
     fn is_initialized(&self) -> bool {
         self.response.is_some() && self.indication.is_some() && self.modem_proxy.is_some()
     }
 
-    fn notify_framework(&self) {
+    fn notify_framework(&self) -> Result<(), Error> {
         if !self.is_initialized() {
-            return;
+            return Ok(());
         }
-        let ind = self.indication.as_ref().unwrap();
-        ind.simStatusChanged(RadioIndicationType::UNSOLICITED).unwrap();
-        ind.subscriptionStatusChanged(RadioIndicationType::UNSOLICITED, true).unwrap();
+        let ind = self.indication.as_ref().ok_or(Error::noneopt())?;
+        ind.simStatusChanged(RadioIndicationType::UNSOLICITED)?;
+        ind.subscriptionStatusChanged(RadioIndicationType::UNSOLICITED, true)?;
+        Ok(())
     }
 }
 
@@ -148,19 +155,11 @@ impl IRadioSimAsyncServer for RadioSim {
     async fn getIccCardStatus(&self, serial: i32) -> binder::Result<()> {
         entry_check!(&self, serial, getIccCardStatusResponse, &def());
 
-        let cs = {
+        let cs: Result<CardStatus, Error> = try {
             let shared = shared!(&self);
-            if shared.sim_proxy.is_none() {
-                drop(shared);
-                return okay!(&self, serial, getIccCardStatusResponse, &def());
-            }
-            let sim_proxy = shared.sim_proxy.as_ref().unwrap();
+            let sim_proxy = shared.sim_proxy.as_ref().ok_or(Error::noneopt())?;
             CardStatus {
-                cardState: if sim_proxy.active().await.unwrap() {
-                    STATE_PRESENT
-                } else {
-                    STATE_ABSENT
-                },
+                cardState: if sim_proxy.active().await? { STATE_PRESENT } else { STATE_ABSENT },
                 universalPinState: PinState::UNKNOWN,
                 applications: if shared.card_power_state == CardPowerState::POWER_UP {
                     vec![AppStatus {
@@ -176,16 +175,22 @@ impl IRadioSimAsyncServer for RadioSim {
                 gsmUmtsSubscriptionAppIndex: 0,
                 cdmaSubscriptionAppIndex: -1,
                 imsSubscriptionAppIndex: -1,
-                iccid: sim_proxy.sim_identifier().await.unwrap().to_string(),
-                eid: sim_proxy.eid().await.unwrap(),
+                iccid: sim_proxy.sim_identifier().await?.to_string(),
+                eid: sim_proxy.eid().await?,
                 ..Default::default()
             }
         };
+        let cs = cs?;
         okay!(&self, serial, getIccCardStatusResponse, &cs)
     }
     async fn getImsiForApp(&self, serial: i32, _aid: &str) -> binder::Result<()> {
         entry_check!(&self, serial, getImsiForAppResponse, "");
-        let imsi = shared!(&self).sim_proxy.as_ref().unwrap().imsi().await.unwrap();
+        let imsi: Result<String, Error> = try {
+            let shared = shared!(&self);
+            let sim_proxy = shared.sim_proxy.as_ref().ok_or(Error::noneopt())?;
+            sim_proxy.imsi().await?
+        };
+        let imsi = imsi?;
         okay!(&self, serial, getImsiForAppResponse, imsi.as_str())
     }
     async fn getSimPhonebookCapacity(&self, serial: i32) -> binder::Result<()> {
@@ -353,7 +358,7 @@ impl IRadioSimAsyncServer for RadioSim {
         shared.indication = Some(radio_indication.clone());
         shared.uiccapp_enabled = true;
         shared.card_power_state = CardPowerState::POWER_UP;
-        shared.notify_framework();
+        shared.notify_framework()?;
 
         Ok(())
     }
