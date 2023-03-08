@@ -7,8 +7,11 @@
 
 use crate::{
     mm_zbus::{consts::*, mm_modem_proxy::ModemProxy, mm_sim_proxy::SimProxy},
-    utils::iradio::{
-        declare_async_iradio, def, entry_check, not_implemented, okay, shared, sharedmut,
+    utils::{
+        error::Error,
+        iradio::{
+            declare_async_iradio, def, entry_check, not_implemented, okay, shared, sharedmut,
+        },
     },
 };
 use android_hardware_radio::aidl::android::hardware::radio::{
@@ -45,7 +48,10 @@ pub struct RadioModem {
 }
 
 impl RadioModemShared {
-    pub fn bind(shared_in: &Arc<RwLock<RadioModemShared>>, modem_proxy: &ModemProxy<'static>) {
+    pub(crate) fn bind(
+        shared_in: &Arc<RwLock<RadioModemShared>>,
+        modem_proxy: &ModemProxy<'static>,
+    ) -> Result<(), Error> {
         /* Setup shared structure */
         {
             let mut shared = block_on(shared_in.write());
@@ -53,73 +59,75 @@ impl RadioModemShared {
             let conn = modem_proxy.connection();
             let sim_path = block_on(modem_proxy.sim());
             if let Ok(sim_path) = sim_path {
-                shared.sim_proxy = Some(
-                    block_on(SimProxy::builder(conn).path(sim_path).unwrap().build()).unwrap(),
-                );
+                shared.sim_proxy = Some(block_on(SimProxy::builder(conn).path(sim_path)?.build())?);
             }
             shared.modem_bound = true;
         }
         /* Register listeners */
-        {
-            let shared = shared_in.clone();
-            spawn(async move {
-                let mm_modem_c = shared.read().await.modem_proxy.as_ref().unwrap().clone();
+        let shared = shared_in.clone();
+        spawn(async move {
+            let result: Result<(), Error> = try {
+                let mm_modem_c =
+                    shared.read().await.modem_proxy.as_ref().ok_or(Error::noneopt())?.clone();
                 let mut st_prop = mm_modem_c.receive_state_changed().await;
                 loop {
                     select! {
                         e = st_prop.next().fuse() => {
-                            let state = e.unwrap().get().await.unwrap();
+                            let state = e.ok_or(Error::noneopt())?.get().await?;
                             info!("Signal: {}", state);
-                            shared.read().await.notify_radio_state().await;
+                            shared.read().await.notify_radio_state().await?;
                         },
                         complete => break,
                     };
                 }
 
                 info!("Exit");
-            });
-        }
+            };
+            result.unwrap_or_else(|e| e.log());
+        });
         /* Notify the framework */
         {
             let shared = block_on(shared_in.read());
-            block_on(shared.notify_framework());
+            block_on(shared.notify_framework())?;
         }
+        Ok(())
     }
 
-    pub fn unbind(shared_in: &Arc<RwLock<RadioModemShared>>) {
+    pub(crate) fn unbind(shared_in: &Arc<RwLock<RadioModemShared>>) -> Result<(), Error> {
         let mut shared = block_on(shared_in.write());
         shared.modem_bound = false;
         shared.modem_proxy = None;
         shared.sim_proxy = None;
+        Ok(())
     }
 
     pub fn is_initialized(&self) -> bool {
         self.response.is_some() && self.indication.is_some() && self.modem_proxy.is_some()
     }
 
-    async fn notify_radio_state(&self) {
+    async fn notify_radio_state(&self) -> Result<(), Error> {
         if !self.is_initialized() {
-            return;
+            return Ok(());
         }
-        let ind = self.indication.as_ref().unwrap();
-        let state = self.modem_proxy.as_ref().unwrap().state().await.unwrap();
+        let ind = self.indication.as_ref().ok_or(Error::noneopt())?;
+        let state = self.modem_proxy.as_ref().ok_or(Error::noneopt())?.state().await?;
         let enabled = state == mm_modem_state::ENABLED || state == mm_modem_state::REGISTERED;
         ind.radioStateChanged(
             RadioIndicationType::UNSOLICITED,
             if enabled { RadioState::ON } else { RadioState::OFF },
-        )
-        .unwrap();
+        )?;
+        Ok(())
     }
 
-    pub async fn notify_framework(&self) {
+    pub(crate) async fn notify_framework(&self) -> Result<(), Error> {
         if !self.is_initialized() {
-            return;
+            return Ok(());
         }
-        let ind = self.indication.as_ref().unwrap();
-        ind.radioCapabilityIndication(RadioIndicationType::UNSOLICITED, &self.radio_capability)
-            .unwrap();
-        ind.rilConnected(RadioIndicationType::UNSOLICITED).unwrap();
-        self.notify_radio_state().await;
+        let ind = self.indication.as_ref().ok_or(Error::noneopt())?;
+        ind.radioCapabilityIndication(RadioIndicationType::UNSOLICITED, &self.radio_capability)?;
+        ind.rilConnected(RadioIndicationType::UNSOLICITED)?;
+        self.notify_radio_state().await?;
+        Ok(())
     }
 }
 
@@ -134,14 +142,15 @@ impl IRadioModemAsyncServer for RadioModem {
     }
     async fn getDeviceIdentity(&self, serial: i32) -> binder::Result<()> {
         entry_check!(&self, serial, getDeviceIdentityResponse, "", "", "", "");
-        let imei = {
+        let imei: Result<String, Error> = try {
             let shared = shared!(&self);
             if shared.sim_proxy.is_none() {
                 return okay!(&self, serial, getDeviceIdentityResponse, "", "", "", "");
             }
-            let sim_proxy = shared.sim_proxy.as_ref().unwrap();
-            sim_proxy.sim_identifier().await.unwrap()
+            let sim_proxy = shared.sim_proxy.as_ref().ok_or(Error::noneopt())?;
+            sim_proxy.sim_identifier().await?
         };
+        let imei = imei?;
         okay!(&self, serial, getDeviceIdentityResponse, imei.as_str(), "00", "00", "00")
     }
 
@@ -239,9 +248,12 @@ impl IRadioModemAsyncServer for RadioModem {
 
         let shared = self.shared.clone();
         spawn(async move {
-            let shared = shared.read().await;
-            let mp = shared.modem_proxy.clone().unwrap();
-            mp.enable(power_on).await.unwrap();
+            let result: Result<(), Error> = try {
+                let shared = shared.read().await;
+                let mp = shared.modem_proxy.clone().ok_or(Error::noneopt())?;
+                mp.enable(power_on).await?;
+            };
+            result.unwrap_or_else(|e| e.log());
         });
 
         okay!(&self, serial, setRadioPowerResponse)
@@ -266,7 +278,7 @@ impl IRadioModemAsyncServer for RadioModem {
             session: 0,
         };
 
-        shared.notify_framework().await;
+        shared.notify_framework().await?;
 
         Ok(())
     }
