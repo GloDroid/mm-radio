@@ -150,7 +150,7 @@ pub(crate) fn bind_modems(rhm: &Arc<RadioHalManager<'static>>) {
             };
 
             RadioDataShared::bind(&feb.radio_data_shared, &modem_proxy)?;
-            RadioMessagingShared::bind(&feb.radio_messaging_shared, &modem_proxy);
+            RadioMessagingShared::bind(&feb.radio_messaging_shared, &modem_proxy)?;
             RadioModemShared::bind(&feb.radio_modem_shared, &modem_proxy);
             RadioNetworkShared::bind(&feb.radio_network_shared, &modem_proxy);
             RadioSimShared::bind(&feb.radio_sim_shared, &modem_proxy);
@@ -174,7 +174,7 @@ pub(crate) fn bind_modems(rhm: &Arc<RadioHalManager<'static>>) {
             let (slot, feb) = feb.unwrap();
 
             RadioDataShared::unbind(&feb.radio_data_shared)?;
-            RadioMessagingShared::unbind(&feb.radio_messaging_shared);
+            RadioMessagingShared::unbind(&feb.radio_messaging_shared)?;
             RadioModemShared::unbind(&feb.radio_modem_shared);
             RadioNetworkShared::unbind(&feb.radio_network_shared);
             RadioSimShared::unbind(&feb.radio_sim_shared);
