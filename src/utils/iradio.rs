@@ -53,7 +53,7 @@ macro_rules! shared {
 
 macro_rules! ind {
     (&$self:ident) => {
-        shared!(&$self).indication.as_ref().ok_or(binder::StatusCode::NO_INIT)?
+        shared!(&$self).indication.as_ref().ok_or(Error::noneopt())?
     };
 }
 

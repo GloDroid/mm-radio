@@ -6,6 +6,7 @@
  */
 
 use crate::mm_zbus::mm_modem_proxy::ModemProxy;
+use crate::utils::error::Error;
 use crate::utils::iradio::{
     declare_async_iradio, entry_check, not_implemented, okay, shared, sharedmut,
 };
@@ -37,36 +38,42 @@ pub struct RadioData {
 }
 
 impl RadioDataShared {
-    pub fn bind(shared_in: &Arc<RwLock<RadioDataShared>>, modem_proxy: &ModemProxy<'static>) {
+    pub(crate) fn bind(
+        shared_in: &Arc<RwLock<RadioDataShared>>,
+        modem_proxy: &ModemProxy<'static>,
+    ) -> Result<(), Error> {
         /* Setup shared structure */
         {
             let mut shared = block_on(shared_in.write());
             shared.modem_proxy = Some(modem_proxy.clone());
             shared.modem_bound = true;
         }
-        Self::notify_framework(shared_in);
+        Self::notify_framework(shared_in)?;
+        Ok(())
     }
 
-    pub fn unbind(shared_in: &Arc<RwLock<RadioDataShared>>) {
+    pub(crate) fn unbind(shared_in: &Arc<RwLock<RadioDataShared>>) -> Result<(), Error> {
         {
             let mut shared = block_on(shared_in.write());
             shared.modem_proxy = None;
             shared.modem_bound = false;
         }
-        Self::notify_framework(shared_in);
+        Self::notify_framework(shared_in)?;
+        Ok(())
     }
 
     fn is_initialized(&self) -> bool {
         self.response.is_some() && self.indication.is_some() && self.modem_bound
     }
 
-    fn notify_framework(shared_in: &Arc<RwLock<RadioDataShared>>) {
+    fn notify_framework(shared_in: &Arc<RwLock<RadioDataShared>>) -> Result<(), Error> {
         let shared = block_on(shared_in.read());
         if !shared.is_initialized() {
-            return;
+            return Ok(());
         }
-        let ind = shared.indication.as_ref().unwrap();
-        ind.dataCallListChanged(Default::default(), Default::default()).unwrap();
+        let ind = shared.indication.as_ref().ok_or(Error::noneopt())?;
+        ind.dataCallListChanged(Default::default(), Default::default())?;
+        Ok(())
     }
 }
 
@@ -172,7 +179,7 @@ impl IRadioDataAsyncServer for RadioData {
             shared.indication = Some(radio_indication.clone());
         }
 
-        RadioDataShared::notify_framework(&self.shared);
+        RadioDataShared::notify_framework(&self.shared)?;
 
         Ok(())
     }
