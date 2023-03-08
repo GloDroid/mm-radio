@@ -21,6 +21,7 @@ use crate::{
         radio_sim::{RadioSim, RadioSimShared},
         radio_voice::{RadioVoice, RadioVoiceShared},
     },
+    utils::error::Error,
 };
 use android_hardware_radio_data::aidl::android::hardware::radio::data::IRadioData::*;
 use android_hardware_radio_messaging::aidl::android::hardware::radio::messaging::IRadioMessaging::*;
@@ -37,10 +38,7 @@ use async_std::{
 
 use futures::{select, FutureExt};
 use log::{error, info};
-use zbus::{
-    fdo::{Error, ObjectManagerProxy},
-    Connection,
-};
+use zbus::{fdo::ObjectManagerProxy, Connection};
 
 macro_rules! add_binder_service {
     ($inst: expr, $obj:ident, $name: expr) => {{
@@ -94,8 +92,8 @@ pub(crate) fn create_radio_hal_manager<'a>(
 }
 
 pub(crate) struct Callbacks {
-    pub modem_added: fn(rhm: &RadioHalManager, path: &str),
-    pub modem_removed: fn(rhm: &RadioHalManager, path: &str),
+    pub modem_added: fn(rhm: &RadioHalManager, path: &str) -> Result<(), Error>,
+    pub modem_removed: fn(rhm: &RadioHalManager, path: &str) -> Result<(), Error>,
 }
 
 pub(crate) fn register_frontend_element(rhm: &RadioHalManager, name: &str) -> Result<(), String> {
@@ -131,7 +129,7 @@ pub(crate) fn register_frontend_element(rhm: &RadioHalManager, name: &str) -> Re
 
 pub(crate) fn bind_modems(rhm: &Arc<RadioHalManager<'static>>) {
     let cbks = Callbacks {
-        modem_added: |rhm, path: &str| {
+        modem_added: |rhm, path: &str| -> Result<(), Error> {
             info!("Adding modem: {}", path);
             let frontends = rhm.frontends.lock().unwrap();
             /* Search for free slot */
@@ -139,7 +137,7 @@ pub(crate) fn bind_modems(rhm: &Arc<RadioHalManager<'static>>) {
 
             if slot.is_none() {
                 error!("No free slot for modem: {}", path);
-                return;
+                return Ok(());
             }
 
             let (slot, feb) = slot.unwrap();
@@ -151,15 +149,16 @@ pub(crate) fn bind_modems(rhm: &Arc<RadioHalManager<'static>>) {
                 block_on(builder.path(path.to_string()).unwrap().build()).unwrap()
             };
 
-            RadioDataShared::bind(&feb.radio_data_shared, &modem_proxy);
+            RadioDataShared::bind(&feb.radio_data_shared, &modem_proxy)?;
             RadioMessagingShared::bind(&feb.radio_messaging_shared, &modem_proxy);
             RadioModemShared::bind(&feb.radio_modem_shared, &modem_proxy);
             RadioNetworkShared::bind(&feb.radio_network_shared, &modem_proxy);
             RadioSimShared::bind(&feb.radio_sim_shared, &modem_proxy);
             RadioVoiceShared::bind(&feb.radio_voice_shared, &modem_proxy);
             info!("Modem \"{}\" bound to slot \"{}\"", path, slot);
+            Ok(())
         },
-        modem_removed: |rhm, path| {
+        modem_removed: |rhm, path| -> Result<(), Error> {
             info!("Removing modem \"{}\"", path);
             let frontends = rhm.frontends.lock().unwrap();
 
@@ -170,11 +169,11 @@ pub(crate) fn bind_modems(rhm: &Arc<RadioHalManager<'static>>) {
 
             if feb.is_none() {
                 error!("Modem \"{}\" was not bound", path);
-                return;
+                return Ok(());
             }
             let (slot, feb) = feb.unwrap();
 
-            RadioDataShared::unbind(&feb.radio_data_shared);
+            RadioDataShared::unbind(&feb.radio_data_shared)?;
             RadioMessagingShared::unbind(&feb.radio_messaging_shared);
             RadioModemShared::unbind(&feb.radio_modem_shared);
             RadioNetworkShared::unbind(&feb.radio_network_shared);
@@ -183,6 +182,7 @@ pub(crate) fn bind_modems(rhm: &Arc<RadioHalManager<'static>>) {
 
             feb.modem_path.swap(&RefCell::new(None));
             info!("Modem \"{}\" unbound from slot \"{}\"", path, slot);
+            Ok(())
         },
     };
     spawn_object_manager(rhm, cbks).unwrap();
@@ -196,7 +196,11 @@ fn spawn_object_manager(
 
     let mo = block_on(rhm.omproxy.get_managed_objects())?;
     for (path, _) in mo {
-        (cbks.modem_added)(&rhm, &path);
+        let result = (cbks.modem_added)(&rhm, &path);
+        if let Err(e) = result {
+            e.log();
+            continue;
+        }
         rhm.objects.lock().unwrap().push(path.to_string());
     }
 
@@ -214,16 +218,29 @@ fn spawn_object_manager(
                     let mut objects = rhm.objects.lock().unwrap();
                     let index = objects.iter().position(|x| x == &path.to_string());
                     if index.is_some() {
-                        (cbks.modem_removed)(&rhm, &path);
-                    } else {
+                        let result = (cbks.modem_removed)(&rhm, &path);
+                        if let Err(e) = result {
+                            e.log();
+                            continue;
+                        }
+                    }
+                    let result = (cbks.modem_added)(&rhm, &path);
+                    if let Err(e) = result {
+                        e.log();
+                        continue;
+                    }
+                    if index.is_none() {
                         objects.push(path.to_string());
                     }
-                    (cbks.modem_added)(&rhm, &path);
                 },
                 e = removed.next().fuse() => {
                     let e = e.unwrap();
                     let path = e.args().unwrap().object_path;
-                    (cbks.modem_removed)(&rhm, &path);
+                    let result = (cbks.modem_removed)(&rhm, &path);
+                    if let Err(e) = result {
+                        e.log();
+                        continue;
+                    }
                     let mut objects = rhm.objects.lock().unwrap();
                     let index = objects.iter().position(|x| x == &e.path().unwrap().to_string());
                     if index.is_some() {
