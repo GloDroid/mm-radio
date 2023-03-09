@@ -10,9 +10,11 @@ use crate::{
         consts::*, mm_call_proxy::CallProxy, mm_modem_proxy::ModemProxy, mm_ussd_proxy::UssdProxy,
         mm_voice_proxy::VoiceProxy,
     },
-    utils::iradio::{
-        declare_async_iradio, def, entry_check, ind, not_implemented, okay, resp_err, shared,
-        sharedmut,
+    utils::{
+        error::Error,
+        iradio::{
+            declare_async_iradio, def, entry_check, ind, not_implemented, okay, shared, sharedmut,
+        },
     },
 };
 use android_hardware_radio::aidl::android::hardware::radio::RadioIndicationType::*;
@@ -65,57 +67,56 @@ pub struct RadioVoice {
     pub shared: Arc<RwLock<RadioVoiceShared>>,
 }
 
-async fn build_call_proxy(conn: Connection, path: String) -> CallProxy<'static> {
-    CallProxy::builder(&conn).path(path).unwrap().build().await.unwrap()
-}
-
 impl Call {
     async fn new(
         shared_in: &Arc<RwLock<RadioVoiceShared>>,
         path: &str,
         conn: Connection,
-    ) -> Option<Self> {
+    ) -> Result<Self, Error> {
         let (stop_monitoring, stop_monitoring_rx) = async_std::channel::bounded(1);
 
-        let call = Call { proxy: build_call_proxy(conn, path.to_string()).await, stop_monitoring };
+        let proxy = CallProxy::builder(&conn).path(path.to_string())?.build().await?;
+        let call = Call { proxy, stop_monitoring };
 
-        let call_state = call.proxy.state().await.ok()?;
+        let call_state = call.proxy.state().await?;
         if call_state == mm_call_state::TERMINATED {
-            return None;
+            return Err(Error::new("Call is terminated"));
         }
 
         let mm_call_c = call.proxy.clone();
         let shared = shared_in.clone();
         let path = path.to_string();
         spawn(async move {
-            let mut call_state = mm_call_c.receive_state_changed().await;
-            let mut stop = stop_monitoring_rx;
-            {
-                let shared = shared.read().await;
-                shared.notify_call_state_changed();
-            }
-            info!("Call monitoring started");
-            loop {
-                select! {
-                    state = call_state.next().fuse() => {
-                        let new_state = state.unwrap().get().await.unwrap();
-                        info!("Call state: {}", new_state);
-                        let mut shared = shared.write().await;
-                        shared.notify_call_state_changed();
-                        if new_state == mm_call_state::TERMINATED {
-                            shared.calls.remove(path.as_str());
-                            break;
-                        }
-                    },
-                    _ = stop.next().fuse() => break,
-                    complete => break,
-                };
-            }
-
+            let result: Result<(), Error> = try {
+                let mut call_state = mm_call_c.receive_state_changed().await;
+                let mut stop = stop_monitoring_rx;
+                {
+                    let shared = shared.read().await;
+                    shared.notify_call_state_changed();
+                }
+                info!("Call monitoring started");
+                loop {
+                    select! {
+                        state = call_state.next().fuse() => {
+                            let new_state = state.ok_or(Error::noneopt())?.get().await?;
+                            info!("Call state: {}", new_state);
+                            let mut shared = shared.write().await;
+                            shared.notify_call_state_changed();
+                            if new_state == mm_call_state::TERMINATED {
+                                shared.calls.remove(path.as_str());
+                                break;
+                            }
+                        },
+                        _ = stop.next().fuse() => break,
+                        complete => break,
+                    };
+                }
+            };
+            result.unwrap_or_else(|e| e.log());
             info!("Call monitoring stopped");
         });
 
-        Some(call)
+        Ok(call)
     }
 
     async fn call_state_mm_to_aidl(&self) -> Option<i32> {
@@ -133,88 +134,104 @@ impl Call {
         }
     }
 
-    fn get_index(&self) -> i32 {
+    fn get_index(&self) -> Result<i32, Error> {
         let path = self.proxy.path().as_str();
-        path.split('/').last().unwrap().parse().unwrap()
+        Ok(path.split('/').last().ok_or(Error::noneopt())?.parse()?)
     }
 }
 
 impl RadioVoiceShared {
-    pub fn bind(shared_in: &Arc<RwLock<RadioVoiceShared>>, modem_proxy: &ModemProxy<'static>) {
+    pub(crate) fn bind(
+        shared_in: &Arc<RwLock<RadioVoiceShared>>,
+        modem_proxy: &ModemProxy<'static>,
+    ) -> Result<(), Error> {
         /* Setup shared structure */
         {
             let mut shared = block_on(shared_in.write());
             shared.modem_proxy = Some(modem_proxy.clone());
             let conn = modem_proxy.connection();
             let path = modem_proxy.path().to_string();
-            shared.ussd_proxy = Some(
-                block_on(UssdProxy::builder(conn).path(path.clone()).unwrap().build()).unwrap(),
-            );
-            shared.voice_proxy =
-                Some(block_on(VoiceProxy::builder(conn).path(path).unwrap().build()).unwrap());
+            shared.ussd_proxy =
+                Some(block_on(UssdProxy::builder(conn).path(path.clone())?.build())?);
+            shared.voice_proxy = Some(block_on(VoiceProxy::builder(conn).path(path)?.build())?);
             shared.modem_bound = true;
             shared.calls = HashMap::new();
         }
         /* Register event listeners */
-        {
-            let shared = shared_in.clone();
-            spawn(async move {
-                let mm_voice_c = shared.read().await.voice_proxy.as_ref().unwrap().clone();
-                let mut call_added = mm_voice_c.receive_call_added().await.unwrap();
-                let mut call_deleted = mm_voice_c.receive_call_deleted().await.unwrap();
+        let shared = shared_in.clone();
+        spawn(async move {
+            let result: Result<(), Error> = try {
+                let mm_voice_c =
+                    shared.read().await.voice_proxy.as_ref().ok_or(Error::noneopt())?.clone();
+                let mut call_added = mm_voice_c.receive_call_added().await?;
+                let mut call_deleted = mm_voice_c.receive_call_deleted().await?;
                 loop {
                     select! {
-                        path = call_added.next().fuse() => Self::add_call(&shared, path.unwrap().args().unwrap().call_path().to_string()).await,
-                        path = call_deleted.next().fuse() => Self::delete_call(&shared, path.unwrap().args().unwrap().call_path().to_string()).await,
+                        path = call_added.next().fuse() => {
+                            let path = path.ok_or(Error::noneopt())?;
+                            Self::add_call(&shared, path.args()?.call_path().to_string()).await.unwrap_or_else(|e| e.log());
+                        },
+                        path = call_deleted.next().fuse() => {
+                            let path = path.ok_or(Error::noneopt())?;
+                            Self::delete_call(&shared, path.args()?.call_path().to_string()).await.unwrap_or_else(|e| e.log());
+                        },
                     }
                 }
-            });
-        }
+            };
+            result.unwrap_or_else(|e| e.log());
+        });
         /* Query calls from the Modem Manager */
         {
             let calls = {
                 let shared = block_on(shared_in.read());
-                block_on(shared.voice_proxy.as_ref().unwrap().list_calls()).unwrap()
+                block_on(shared.voice_proxy.as_ref().ok_or(Error::noneopt())?.list_calls())?
             };
             let shared = shared_in.clone();
             spawn(async move {
                 for call in calls {
-                    Self::add_call(&shared, call.to_string()).await;
+                    Self::add_call(&shared, call.to_string()).await.unwrap_or_else(|e| e.log());
                 }
             });
         }
+        Ok(())
     }
 
-    pub fn unbind(shared_in: &Arc<RwLock<RadioVoiceShared>>) {
+    pub(crate) fn unbind(shared_in: &Arc<RwLock<RadioVoiceShared>>) -> Result<(), Error> {
         let mut shared = block_on(shared_in.write());
         shared.modem_bound = false;
         shared.modem_proxy = None;
         shared.ussd_proxy = None;
         shared.voice_proxy = None;
+        Ok(())
     }
 
-    async fn add_call(shared_in: &Arc<RwLock<RadioVoiceShared>>, path: String) {
+    async fn add_call(
+        shared_in: &Arc<RwLock<RadioVoiceShared>>,
+        path: String,
+    ) -> Result<(), Error> {
         let mut shared = shared_in.write().await;
         if shared.calls.contains_key(&path) {
             info!("Call already exists");
-            return;
+            return Ok(());
         }
-        let conn = shared.modem_proxy.as_ref().unwrap().connection().clone();
-        if let Some(c) = Call::new(shared_in, &path, conn).await {
-            info!("New call: {}", path);
-
-            shared.calls.insert(path.clone(), c);
-            info!("Call added: {:?}", path);
-        };
+        let conn = shared.modem_proxy.as_ref().ok_or(Error::noneopt())?.connection().clone();
+        let call = Call::new(shared_in, &path, conn).await?;
+        shared.calls.insert(path.clone(), call);
+        info!("Call added: {:?}", path);
+        Ok(())
     }
 
-    async fn delete_call(shared: &Arc<RwLock<RadioVoiceShared>>, path: String) {
+    async fn delete_call(
+        shared: &Arc<RwLock<RadioVoiceShared>>,
+        path: String,
+    ) -> Result<(), Error> {
         let mut shared = shared.write().await;
         info!("Call deleted: {:?}", path);
         if !shared.calls.contains_key(&path) {
-            return;
+            return Err(Error::new("Call is not in list"));
         }
         shared.calls.remove(&path);
+        Ok(())
     }
 
     fn notify_call_state_changed(&self) -> Option<()> {
@@ -236,63 +253,56 @@ impl RadioVoiceShared {
 impl IRadioVoiceAsyncServer for RadioVoice {
     async fn acceptCall(&self, serial: i32) -> binder::Result<()> {
         entry_check!(&self, serial, acceptCallResponse);
-        {
+        let result: Result<(), Error> = try {
             let shared = shared!(&self);
             let call = shared.find_call(mm_call_state::RINGING_IN).await;
             if let Some(call) = call {
-                call.proxy.accept().await.unwrap();
+                call.proxy.accept().await?;
             }
-        }
+        };
+        result?;
         okay!(&self, serial, acceptCallResponse)
     }
     async fn cancelPendingUssd(&self, serial: i32) -> binder::Result<()> {
         entry_check!(&self, serial, cancelPendingUssdResponse);
-        {
+        let result: Result<(), Error> = try {
             let shared = shared!(&self);
-            let ussd_proxy = shared.ussd_proxy.as_ref().unwrap();
-            ussd_proxy.cancel().await.unwrap_or_default();
-        }
+            let ussd_proxy = shared.ussd_proxy.as_ref().ok_or(Error::noneopt())?;
+            ussd_proxy.cancel().await?;
+        };
+        result?;
         okay!(&self, serial, cancelPendingUssdResponse)
     }
     async fn conference(&self, serial: i32) -> binder::Result<()> {
         entry_check!(&self, serial, conferenceResponse);
-        {
+        let result: Result<(), Error> = try {
             let shared = shared!(&self);
             let call = shared.find_call(mm_call_state::HELD).await;
             if let Some(call) = call {
-                call.proxy.join_multiparty().await.unwrap();
+                call.proxy.join_multiparty().await?;
             }
-        }
+        };
+        result?;
         okay!(&self, serial, conferenceResponse)
     }
     async fn dial(&self, serial: i32, dial_info: &Dial) -> binder::Result<()> {
         entry_check!(&self, serial, dialResponse);
-        let shared = shared!(&self);
-        let voice_proxy = shared.voice_proxy.as_ref().unwrap();
-        let mut call_props = HashMap::new();
-        call_props.insert("number", dial_info.address.clone().into());
-        let path = voice_proxy.create_call(call_props).await.unwrap();
-        drop(shared);
-
-        RadioVoiceShared::add_call(&self.shared, path.to_string()).await;
-
-        let shared = shared!(&self);
-        let call = shared.calls.get(&path.to_string());
-        if call.is_none() {
+        let result: Result<(), Error> = try {
+            let shared = shared!(&self);
+            let voice_proxy = shared.voice_proxy.as_ref().ok_or(Error::noneopt())?;
+            let mut call_props = HashMap::new();
+            call_props.insert("number", dial_info.address.clone().into());
+            let path = voice_proxy.create_call(call_props).await?;
             drop(shared);
-            error!("Failed to find call: {:?}", path);
-            return resp_err!(&self, serial, RadioError::INTERNAL_ERR, dialResponse);
-        }
-        let call = call.unwrap();
-        let result = call.proxy.start().await;
-        if let Err(e) = result {
-            drop(shared);
-            error!("Failed to start call: {:?}", e);
-            return resp_err!(&self, serial, RadioError::INTERNAL_ERR, dialResponse);
-        }
 
-        drop(shared);
-        info!("Dialing: {:?}", path);
+            RadioVoiceShared::add_call(&self.shared, path.to_string()).await?;
+
+            let shared = shared!(&self);
+            shared.calls.get(&path.to_string()).ok_or(Error::noneopt())?.proxy.start().await?;
+
+            info!("Dialing: {:?}", path);
+        };
+        result?;
         okay!(&self, serial, dialResponse)
     }
     async fn emergencyDial(
@@ -312,16 +322,10 @@ impl IRadioVoiceAsyncServer for RadioVoice {
     }
     async fn explicitCallTransfer(&self, serial: i32) -> binder::Result<()> {
         entry_check!(&self, serial, explicitCallTransferResponse);
-        let result = shared!(&self).voice_proxy.as_ref().unwrap().transfer().await;
-        if let Err(e) = result {
-            error!("transfer failed: {}", e);
-            return resp_err!(
-                &self,
-                serial,
-                RadioError::INTERNAL_ERR,
-                hangupForegroundResumeBackgroundResponse
-            );
-        }
+        let result: Result<(), Error> = try {
+            shared!(&self).voice_proxy.as_ref().ok_or(Error::noneopt())?.transfer().await?;
+        };
+        result?;
         okay!(&self, serial, explicitCallTransferResponse)
     }
     async fn getCallForwardStatus(
@@ -333,8 +337,15 @@ impl IRadioVoiceAsyncServer for RadioVoice {
     }
     async fn getCallWaiting(&self, serial: i32, _service_class: i32) -> binder::Result<()> {
         entry_check!(&self, serial, getCallWaitingResponse, false, 0);
-        let waiting =
-            shared!(&self).voice_proxy.as_ref().unwrap().call_waiting_query().await.unwrap();
+        let waiting: Result<bool, Error> = try {
+            shared!(&self)
+                .voice_proxy
+                .as_ref()
+                .ok_or(Error::noneopt())?
+                .call_waiting_query()
+                .await?
+        };
+        let waiting = waiting?;
         okay!(&self, serial, getCallWaitingResponse, waiting, 0)
     }
     async fn getClip(&self, serial: i32) -> binder::Result<()> {
@@ -347,27 +358,30 @@ impl IRadioVoiceAsyncServer for RadioVoice {
         entry_check!(&self, serial, getCurrentCallsResponse, def());
         let mut calls = Vec::new();
 
-        for call in shared!(&self).calls.values() {
-            let proxy = &call.proxy;
+        let result: Result<(), Error> = try {
+            for call in shared!(&self).calls.values() {
+                let proxy = &call.proxy;
 
-            let call_state = call.call_state_mm_to_aidl().await;
-            if call_state.is_none() {
-                continue;
+                let call_state = call.call_state_mm_to_aidl().await;
+                if call_state.is_none() {
+                    continue;
+                }
+
+                let vcall = VoiceCall::Call {
+                    state: call_state.ok_or(Error::noneopt())?,
+                    index: call.get_index()? + 1,
+                    isMpty: proxy.multiparty().await?,
+                    isMT: proxy.direction().await? == mm_call_direction::INCOMING,
+                    isVoice: true,
+                    number: proxy.number().await?,
+                    numberPresentation: VoiceCall::PRESENTATION_ALLOWED,
+                    namePresentation: VoiceCall::PRESENTATION_ALLOWED,
+                    ..Default::default()
+                };
+                calls.push(vcall);
             }
-
-            let vcall = VoiceCall::Call {
-                state: call_state.unwrap(),
-                index: call.get_index() + 1,
-                isMpty: proxy.multiparty().await.unwrap(),
-                isMT: proxy.direction().await.unwrap() == mm_call_direction::INCOMING,
-                isVoice: true,
-                number: proxy.number().await.unwrap(),
-                numberPresentation: VoiceCall::PRESENTATION_ALLOWED,
-                namePresentation: VoiceCall::PRESENTATION_ALLOWED,
-                ..Default::default()
-            };
-            calls.push(vcall);
-        }
+        };
+        result?;
 
         okay!(&self, serial, getCurrentCallsResponse, &calls)
     }
@@ -398,34 +412,30 @@ impl IRadioVoiceAsyncServer for RadioVoice {
     }
     async fn hangup(&self, serial: i32, gsm_index: i32) -> binder::Result<()> {
         entry_check!(&self, serial, hangupConnectionResponse);
-        let path = format!("/org/freedesktop/ModemManager1/Call/{}", gsm_index - 1);
-        info!("hangup path: {}", path);
-        {
+        let result: Result<(), Error> = try {
+            let path = format!("/org/freedesktop/ModemManager1/Call/{}", gsm_index - 1);
+            info!("hangup path: {}", path);
             let shared = shared!(&self);
-            let call = shared.calls.get(&path);
-            if let Some(call) = call {
-                call.proxy.hangup().await.unwrap();
-            }
-        }
+            shared.calls.get(&path).ok_or(Error::noneopt())?.proxy.hangup().await?;
+        };
+        result?;
         okay!(&self, serial, hangupConnectionResponse)
     }
     async fn hangupForegroundResumeBackground(&self, serial: i32) -> binder::Result<()> {
         entry_check!(&self, serial, hangupForegroundResumeBackgroundResponse);
-        let result = shared!(&self).voice_proxy.as_ref().unwrap().hangup_and_accept().await;
-        if let Err(e) = result {
-            error!("hangup_and_accept failed: {}", e);
-            return resp_err!(
-                &self,
-                serial,
-                RadioError::INTERNAL_ERR,
-                hangupForegroundResumeBackgroundResponse
-            );
-        }
+        let result: Result<(), Error> = try {
+            let shared = shared!(&self);
+            shared.voice_proxy.as_ref().ok_or(Error::noneopt())?.hangup_and_accept().await?;
+        };
+        result?;
         okay!(&self, serial, hangupForegroundResumeBackgroundResponse)
     }
     async fn hangupWaitingOrBackground(&self, serial: i32) -> binder::Result<()> {
         entry_check!(&self, serial, hangupWaitingOrBackgroundResponse);
-        shared!(&self).voice_proxy.as_ref().unwrap().hangup_all().await.unwrap();
+        let result: Result<(), Error> = try {
+            shared!(&self).voice_proxy.as_ref().ok_or(Error::noneopt())?.hangup_all().await?;
+        };
+        result?;
         okay!(&self, serial, hangupWaitingOrBackgroundResponse)
     }
     async fn isVoNrEnabled(&self, serial: i32) -> binder::Result<()> {
@@ -434,18 +444,18 @@ impl IRadioVoiceAsyncServer for RadioVoice {
     async fn rejectCall(&self, serial: i32) -> binder::Result<()> {
         entry_check!(&self, serial, rejectCallResponse);
         /* "Send UDUB (user determined user busy) to ringing or waiting call answer)" */
-        {
+        let result: Result<(), Error> = try {
             let shared = shared!(&self);
             let call = shared.find_call(VoiceCall::STATE_INCOMING).await;
             if let Some(call) = call {
-                call.proxy.hangup().await.unwrap();
+                call.proxy.hangup().await?;
             }
             let call = shared.find_call(VoiceCall::STATE_WAITING).await;
             if let Some(call) = call {
-                call.proxy.hangup().await.ok();
+                call.proxy.hangup().await?;
             }
-        }
-
+        };
+        result?;
         okay!(&self, serial, rejectCallResponse)
     }
     async fn responseAcknowledgement(&self) -> binder::Result<()> {
@@ -465,64 +475,56 @@ impl IRadioVoiceAsyncServer for RadioVoice {
     }
     async fn sendDtmf(&self, serial: i32, s: &str) -> binder::Result<()> {
         entry_check!(&self, serial, sendDtmfResponse);
-        {
+        let result: Result<(), Error> = try {
             let shared = shared!(&self);
-            let call = shared.find_call(VoiceCall::STATE_ACTIVE).await;
-            if let Some(call) = call {
-                call.proxy.send_dtmf(s).await.ok();
-            }
-        }
+            shared
+                .find_call(VoiceCall::STATE_ACTIVE)
+                .await
+                .ok_or(Error::noneopt())?
+                .proxy
+                .send_dtmf(s)
+                .await?;
+        };
+        result?;
         okay!(&self, serial, sendDtmfResponse)
     }
     async fn sendUssd(&self, serial: i32, ussd: &str) -> binder::Result<()> {
         entry_check!(&self, serial, sendUssdResponse);
-        {
+        let result: Result<(), Error> = try {
             let shared = shared!(&self);
-            let ussd_proxy = shared.ussd_proxy.as_ref().unwrap();
-            let state = ussd_proxy.state().await.unwrap();
-            let result = if state == mm_modem_3gpp_ussd_session_state::USER_RESPONSE {
+            let ussd_proxy = shared.ussd_proxy.as_ref().ok_or(Error::noneopt())?;
+            let state = ussd_proxy.state().await?;
+            let response = if state == mm_modem_3gpp_ussd_session_state::USER_RESPONSE {
                 info!("Respond ussd: {}", ussd);
-                ussd_proxy.respond(ussd).await
+                ussd_proxy.respond(ussd).await?
             } else {
                 info!("Initiate ussd: {}", ussd);
-                ussd_proxy.initiate(ussd).await
+                ussd_proxy.initiate(ussd).await?
             };
-            if let Err(e) = result {
-                error!("sendUssd failed: {}", e);
-                return resp_err!(
-                    &self,
-                    serial,
-                    RadioError::INTERNAL_ERR,
-                    hangupForegroundResumeBackgroundResponse
-                );
-            }
-            let response = result.unwrap();
             // Wait 100ms for the state to change
             async_std::task::sleep(std::time::Duration::from_millis(100)).await;
-            let state = ussd_proxy.state().await.unwrap();
-            drop(shared);
-
-            let mode_type = match state {
+            let mode_type = match ussd_proxy.state().await? {
                 mm_modem_3gpp_ussd_session_state::IDLE => UssdModeType::NOTIFY,
                 mm_modem_3gpp_ussd_session_state::USER_RESPONSE => UssdModeType::REQUEST,
                 _ => UssdModeType::LOCAL_CLIENT,
             };
+            drop(shared);
+
             info!("sendUssd state: {:?} response: {}", state, response);
             ind!(&self).onUssd(RadioIndicationType::UNSOLICITED, mode_type, &response)?;
-        }
+        };
+        result?;
         okay!(&self, serial, sendUssdResponse)
     }
     async fn separateConnection(&self, serial: i32, gsm_index: i32) -> binder::Result<()> {
         entry_check!(&self, serial, separateConnectionResponse);
-        {
+        let result: Result<(), Error> = try {
             let shared = shared!(&self);
             let path = format!("/org/freedesktop/ModemManager1/Call/{}", gsm_index - 1);
             info!("separateConnection path: {}", path);
-            let call = shared.calls.get(&path);
-            if let Some(call) = call {
-                call.proxy.leave_multiparty().await.unwrap();
-            }
-        }
+            shared.calls.get(&path).ok_or(Error::noneopt())?.proxy.leave_multiparty().await?;
+        };
+        result?;
         okay!(&self, serial, separateConnectionResponse)
     }
     async fn setCallForward(
@@ -539,11 +541,12 @@ impl IRadioVoiceAsyncServer for RadioVoice {
         _svc_class: i32,
     ) -> binder::Result<()> {
         entry_check!(&self, serial, setCallWaitingResponse);
-        {
+        let result: Result<(), Error> = try {
             let shared = shared!(&self);
-            let vp = shared.voice_proxy.as_ref().unwrap();
-            vp.call_waiting_setup(enable).await.unwrap();
-        }
+            let vp = shared.voice_proxy.as_ref().ok_or(Error::noneopt())?;
+            vp.call_waiting_setup(enable).await?;
+        };
+        result?;
         okay!(&self, serial, setCallWaitingResponse)
     }
     async fn setClir(&self, serial: i32, _status: i32) -> binder::Result<()> {
@@ -563,13 +566,12 @@ impl IRadioVoiceAsyncServer for RadioVoice {
     }
     async fn startDtmf(&self, serial: i32, s: &str) -> binder::Result<()> {
         entry_check!(&self, serial, startDtmfResponse);
-        {
+        let result: Result<(), Error> = try {
             let shared = shared!(&self);
-            let call = shared.find_call(VoiceCall::STATE_ACTIVE).await;
-            if let Some(call) = call {
-                call.proxy.send_dtmf(s).await.unwrap();
-            }
-        }
+            let call = shared.find_call(VoiceCall::STATE_ACTIVE).await.ok_or(Error::noneopt())?;
+            call.proxy.send_dtmf(s).await?;
+        };
+        result?;
         okay!(&self, serial, startDtmfResponse)
     }
     async fn stopDtmf(&self, serial: i32) -> binder::Result<()> {
@@ -578,20 +580,12 @@ impl IRadioVoiceAsyncServer for RadioVoice {
     }
     async fn switchWaitingOrHoldingAndActive(&self, serial: i32) -> binder::Result<()> {
         entry_check!(&self, serial, switchWaitingOrHoldingAndActiveResponse);
-        {
+        let result: Result<(), Error> = try {
             let shared = shared!(&self);
-            let vp = shared.voice_proxy.as_ref().unwrap();
-            let result = vp.hold_and_accept().await;
-            if let Err(e) = result {
-                error!("hold_and_accept failed: {}", e);
-                return resp_err!(
-                    &self,
-                    serial,
-                    RadioError::INTERNAL_ERR,
-                    hangupForegroundResumeBackgroundResponse
-                );
-            }
-        }
+            let vp = shared.voice_proxy.as_ref().ok_or(Error::noneopt())?;
+            vp.hold_and_accept().await?;
+        };
+        result?;
         okay!(&self, serial, switchWaitingOrHoldingAndActiveResponse)
     }
 
