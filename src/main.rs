@@ -21,6 +21,7 @@ use android_hardware_radio_config::aidl::android::hardware::radio::config::IRadi
 use android_logger::LogId;
 use async_std::task::block_on;
 use log::{error, info};
+use utils::error::Error;
 
 fn main() {
     // Initialize android logging.
@@ -45,42 +46,45 @@ fn main() {
         error!("{}", panic_info);
     }));
 
-    // Android use different path for dbus socket, set it via env variable.
-    if std::env::var("DBUS_SYSTEM_BUS_ADDRESS").is_err() {
-        std::env::set_var(
-            "DBUS_SYSTEM_BUS_ADDRESS",
-            "unix:path=/mnt/var/run/dbus/system_bus_socket",
-        );
-    }
-
-    info!("mm-radio is starting.");
-
-    let connection = block_on(zbus::Connection::system()).unwrap();
-    let rhm = create_radio_hal_manager(&connection).unwrap();
-
-    radio_hal_manager::add_binder_service!(RadioConfig::default(), RadioConfig, "default").unwrap();
-    const MAX_SLOT: usize = 3;
-    const FIRST_SLOT: usize = 1;
-    let mut slots_registered = 0;
-    for slot in FIRST_SLOT..MAX_SLOT {
-        if register_frontend_element(&rhm, format!("slot{slot}").as_str()).is_err() {
-            break;
+    let result: Result<(), Error> = try {
+        // Android use different path for dbus socket, set it via env variable.
+        if std::env::var("DBUS_SYSTEM_BUS_ADDRESS").is_err() {
+            std::env::set_var(
+                "DBUS_SYSTEM_BUS_ADDRESS",
+                "unix:path=/mnt/var/run/dbus/system_bus_socket",
+            );
         }
-        slots_registered += 1;
-    }
 
-    if slots_registered == 0 {
-        panic!("Failed to register any slot, please check your manifest");
-    }
+        info!("mm-radio is starting.");
 
-    info!("Registered {} slots for modems", slots_registered);
+        let connection = block_on(zbus::Connection::system())?;
+        let rhm = create_radio_hal_manager(&connection)?;
 
-    bind_modems(&rhm);
+        radio_hal_manager::add_binder_service!(RadioConfig::default(), RadioConfig, "default")?;
+        const MAX_SLOT: usize = 3;
+        const FIRST_SLOT: usize = 1;
+        let mut slots_registered = 0;
+        for slot in FIRST_SLOT..MAX_SLOT {
+            if register_frontend_element(&rhm, format!("slot{slot}").as_str()).is_err() {
+                break;
+            }
+            slots_registered += 1;
+        }
 
-    info!("Successfully registered mm-radio service.");
+        if slots_registered == 0 {
+            panic!("Failed to register any slot, please check your manifest");
+        }
 
-    info!("Joining thread pool now.");
-    binder::ProcessState::join_thread_pool();
+        info!("Registered {} slots for modems", slots_registered);
 
-    panic!("Should not reach here.");
+        bind_modems(&rhm)?;
+
+        info!("Successfully registered mm-radio service.");
+
+        info!("Joining thread pool now.");
+        binder::ProcessState::join_thread_pool();
+
+        panic!("Should not reach here.");
+    };
+    result.unwrap_or_else(|e| e.log());
 }
