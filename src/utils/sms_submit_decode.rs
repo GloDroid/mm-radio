@@ -12,13 +12,16 @@
 use crate::utils::pdu_helpers::address::address_from_pdu;
 use crate::utils::pdu_helpers::div_round_up;
 use crate::utils::pdu_helpers::gsm7::gsm7_pdu_to_string;
-use log::error;
 
-pub(crate) fn sms_submit_decode(in_pdu: &str) -> Option<(String /*number*/, String /*text*/)> {
+use super::error::Error;
+
+pub(crate) fn sms_submit_decode(
+    in_pdu: &str,
+) -> Result<(String /*number*/, String /*text*/), Error> {
     let mut pdu = in_pdu;
     let mut message = String::new();
 
-    let first_octet = u8::from_str_radix(&pdu[..2], 16).unwrap();
+    let first_octet = u8::from_str_radix(&pdu[..2], 16)?;
     // bits 0-1 are TP-MTI (message type indicator)
     let tp_mti = first_octet & 0b00000011;
     // bit 2 is TP-RD (reject duplicates)
@@ -33,42 +36,40 @@ pub(crate) fn sms_submit_decode(in_pdu: &str) -> Option<(String /*number*/, Stri
     let _tp_rp = (first_octet & 0b10000000) >> 7 != 0;
 
     if tp_mti != 0b00000001 {
-        error!("Not a SMS-SUBMIT");
-        return None;
+        return Err(Error::new("Not a SMS-SUBMIT"));
     }
 
     if tp_udhi {
-        error!("User data header not supported");
-        return None;
+        return Err(Error::new("User data header not supported"));
     }
 
     pdu = &pdu[2..];
     // TP_MR (message reference - incremented for each message)
-    let _tp_mr = u8::from_str_radix(&pdu[..2], 16).unwrap();
+    let _tp_mr = u8::from_str_radix(&pdu[..2], 16)?;
 
     pdu = &pdu[2..];
     // TP_DA
-    let addr = address_from_pdu(pdu, false).ok()?;
+    let addr = address_from_pdu(pdu, false)?;
     // first byte is length of address
     let destination = addr.0;
     pdu = &pdu[addr.1..];
 
     // TP_PID (protocol identifier)
-    let _tp_pid = u8::from_str_radix(&pdu[..2], 16).unwrap();
+    let _tp_pid = u8::from_str_radix(&pdu[..2], 16)?;
     pdu = &pdu[2..];
 
     // TP_DCS (data coding scheme)
-    let tp_dcs = u8::from_str_radix(&pdu[..2], 16).unwrap();
+    let tp_dcs = u8::from_str_radix(&pdu[..2], 16)?;
     pdu = &pdu[2..];
 
     if tp_vpf != 0b00000000 {
         // TP_VP (validity period), in some cases can take 7 octets, but we only support 1 octet
-        let _tp_vp = u8::from_str_radix(&pdu[..2], 16).unwrap();
+        let _tp_vp = u8::from_str_radix(&pdu[..2], 16)?;
         pdu = &pdu[2..];
     }
 
     // TP_UDL (user data length) in septets
-    let tp_udl = usize::from_str_radix(&pdu[..2], 16).unwrap();
+    let tp_udl = usize::from_str_radix(&pdu[..2], 16)?;
     pdu = &pdu[2..];
 
     // bit 2-3 is encoding
@@ -80,37 +81,31 @@ pub(crate) fn sms_submit_decode(in_pdu: &str) -> Option<(String /*number*/, Stri
     if encoding_is_gsm7 {
         let len = div_round_up(tp_udl * 7, 8) * 2;
         let tp_user_data = &pdu[..len];
-        message = gsm7_pdu_to_string(tp_user_data).unwrap();
+        message = gsm7_pdu_to_string(tp_user_data)?;
         message = message.chars().take(tp_udl).collect();
         pdu = &pdu[len..];
     } else if encoding_is_ucs2 {
         for _ in 0..tp_udl / 2 {
-            let ucs2_u16 = u16::from_str_radix(&pdu[..4], 16).unwrap();
-            let success: Option<()> = try {
-                let ucs2_char = char::decode_utf16([ucs2_u16].iter().cloned()).next()?.ok()?;
-                message.push(ucs2_char);
-            };
-            if success.is_none() {
-                error!("Invalid UCS2 character");
-                return None;
-            }
+            let ucs2_u16 = u16::from_str_radix(&pdu[..4], 16)?;
+            let ucs2_char =
+                char::decode_utf16([ucs2_u16].iter().cloned()).next().ok_or(Error::noneopt())??;
+            message.push(ucs2_char);
 
             pdu = &pdu[4..];
         }
     } else {
-        error!("Unsupported encoding");
-        return None;
+        return Err(Error::new("Unsupported encoding"));
     }
 
     if !pdu.is_empty() {
-        error!("PDU not fully parsed");
-        return None;
+        return Err(Error::new("PDU was not fully parsed"));
     }
 
-    Some((destination, message))
+    Ok((destination, message))
 }
 
 mod tests {
+    #[warn(clippy::unwrap_used, clippy::expect_used)]
     #[test]
     fn test_sms_submit_decode() {
         use super::sms_submit_decode;

@@ -5,6 +5,11 @@
  * Copyright (C) 2023 The GloDroid Project
  */
 
+use std::{
+    error,
+    fmt::{Debug, Display},
+};
+
 use super::div_round_up;
 
 pub(crate) fn gsm7_pdu_from_string(utf: &str) -> Result<String, Gsm7Error> {
@@ -19,7 +24,8 @@ pub(crate) fn gsm7_pdu_from_string(utf: &str) -> Result<String, Gsm7Error> {
 pub(crate) fn gsm7_pdu_to_string(pdu: &str) -> Result<String, Gsm7Error> {
     let mut bytes = Vec::new();
     for i in 0..pdu.len() / 2 {
-        let byte = u8::from_str_radix(&pdu[i * 2..i * 2 + 2], 16).unwrap();
+        let byte =
+            u8::from_str_radix(&pdu[i * 2..i * 2 + 2], 16).map_err(|_| Gsm7Error::InvalidData)?;
         bytes.push(byte);
     }
     gsm7_to_string(&bytes)
@@ -47,6 +53,14 @@ pub enum Gsm7Error {
     InvalidEscapeSequence(u8),
     UnexpectedEndOfData,
 }
+
+impl Display for Gsm7Error {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        Debug::fmt(&self, f)
+    }
+}
+
+impl error::Error for Gsm7Error {}
 
 fn gsm7_to_string(gsm7: &[u8]) -> Result<String, Gsm7Error> {
     let mut bit_start = 0;

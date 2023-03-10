@@ -216,7 +216,7 @@ impl RadioMessagingShared {
 
         info!("Received message from '{}' at '{}' with text '{}'", number, timestamp, text);
 
-        let pdu = sms_deliver_encode(number.as_str(), text.as_str(), timestamp.as_str());
+        let pdu = sms_deliver_encode(number.as_str(), text.as_str(), timestamp.as_str())?;
 
         info!("DELIVER PDU: {}", pdu);
 
@@ -348,7 +348,7 @@ impl IRadioMessagingAsyncServer for RadioMessaging {
         info!("Sending SMS: {:?}", message);
 
         let result: Result<(), Error> = try {
-            let (number, text) = sms_submit_decode(message.pdu.as_str()).ok_or(Error::noneopt())?;
+            let (number, text) = sms_submit_decode(message.pdu.as_str())?;
 
             info!("Sending SMS to '{}' with text '{}'", number, text);
 

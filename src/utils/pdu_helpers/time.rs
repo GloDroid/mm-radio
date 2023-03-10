@@ -5,6 +5,8 @@
  * Copyright (C) 2023 The GloDroid Project
  */
 
+use crate::utils::error::Error;
+
 pub(crate) struct Timestamp {
     year: u16,
     month: u8,
@@ -16,15 +18,15 @@ pub(crate) struct Timestamp {
 }
 
 impl Timestamp {
-    pub(crate) fn from_mm_format(timestamp: &str) -> Timestamp {
-        let year = timestamp[0..4].parse::<u16>().unwrap();
-        let month = timestamp[5..7].parse::<u8>().unwrap();
-        let day = timestamp[8..10].parse::<u8>().unwrap();
-        let hour = timestamp[11..13].parse::<u8>().unwrap();
-        let minute = timestamp[14..16].parse::<u8>().unwrap();
-        let second = timestamp[17..19].parse::<u8>().unwrap();
-        let tz = timestamp[20..22].parse::<i8>().unwrap();
-        Timestamp { year, month, day, hour, minute, second, tz }
+    pub(crate) fn from_mm_format(timestamp: &str) -> Result<Timestamp, Error> {
+        let year = timestamp[0..4].parse::<u16>()?;
+        let month = timestamp[5..7].parse::<u8>()?;
+        let day = timestamp[8..10].parse::<u8>()?;
+        let hour = timestamp[11..13].parse::<u8>()?;
+        let minute = timestamp[14..16].parse::<u8>()?;
+        let second = timestamp[17..19].parse::<u8>()?;
+        let tz = timestamp[20..22].parse::<i8>()?;
+        Ok(Timestamp { year, month, day, hour, minute, second, tz })
     }
 
     pub(crate) fn to_pdu(&self) -> String {
@@ -50,7 +52,7 @@ impl Timestamp {
 
 #[test]
 fn test_decode_timestamp() {
-    let timestamp = Timestamp::from_mm_format("2023-01-17T00:33:51+02");
+    let timestamp = Timestamp::from_mm_format("2023-01-17T00:33:51+02").unwrap();
     assert_eq!(timestamp.year, 2023);
     assert_eq!(timestamp.month, 1);
     assert_eq!(timestamp.day, 17);
