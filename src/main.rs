@@ -5,6 +5,7 @@
  * Copyright (C) 2023 The GloDroid Project
  */
 
+#![warn(clippy::unwrap_used, clippy::expect_used)]
 #![feature(async_closure)]
 #![feature(try_blocks)]
 
