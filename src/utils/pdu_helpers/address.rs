@@ -8,17 +8,19 @@
 /* Ref: https://en.wikipedia.org/wiki/GSM_03.40 */
 
 use super::{align, div_round_up};
-use crate::utils::pdu_helpers::gsm7::{gsm7_pdu_from_string, gsm7_pdu_to_string};
-use std::io;
+use crate::utils::{
+    error::Error,
+    pdu_helpers::gsm7::{gsm7_pdu_from_string, gsm7_pdu_to_string},
+};
 
-pub(crate) fn address_to_pdu(utf8: &str, is_smsc: bool) -> Result<String, io::Error> {
+pub(crate) fn address_to_pdu(utf8: &str, is_smsc: bool) -> Result<String, Error> {
     let mut result = String::new();
     let (international, utf8) =
         if let Some(number) = utf8.strip_prefix('+') { (true, number) } else { (false, utf8) };
 
     let alphabetic = !utf8.chars().all(|c| c.is_ascii_digit());
     if alphabetic {
-        let pdu = gsm7_pdu_from_string(utf8).map_err(|_| io::ErrorKind::InvalidData)?;
+        let pdu = gsm7_pdu_from_string(utf8)?;
         if is_smsc {
             result.push_str(&format!("{:02X}", div_round_up(pdu.chars().count(), 2) + 1));
         } else {
@@ -41,20 +43,20 @@ pub(crate) fn address_to_pdu(utf8: &str, is_smsc: bool) -> Result<String, io::Er
     Ok(result)
 }
 
-pub(crate) fn address_from_pdu(pdu: &str, is_smsc: bool) -> Result<(String, usize), io::Error> {
+pub(crate) fn address_from_pdu(pdu: &str, is_smsc: bool) -> Result<(String, usize), Error> {
     let len = pdu.len();
     if len < 2 {
-        return Err(io::ErrorKind::InvalidData.into());
+        return Err(Error::new("PDU is too short"));
     }
-    let pdu_len = usize::from_str_radix(&pdu[0..2], 16).map_err(|_| io::ErrorKind::InvalidData)?;
+    let pdu_len = usize::from_str_radix(&pdu[0..2], 16)?;
     if pdu_len == 0 {
         if is_smsc {
             return Ok((String::new(), 2));
         } else {
-            return Err(io::ErrorKind::InvalidData.into());
+            return Err(Error::new("PDU len can't be 0"));
         }
     }
-    let pdu_type = u8::from_str_radix(&pdu[2..4], 16).map_err(|_| io::ErrorKind::InvalidData)?;
+    let pdu_type = u8::from_str_radix(&pdu[2..4], 16)?;
     let toa = (pdu_type & 0x70) >> 4;
     let _npi = pdu_type & 0x0F;
     let toa_alphabetic = 0b00000101;
@@ -69,7 +71,7 @@ pub(crate) fn address_from_pdu(pdu: &str, is_smsc: bool) -> Result<(String, usiz
     let pdu_number = &pdu[4..pdu_len_chars];
 
     let utf8 = if toa == toa_alphabetic {
-        gsm7_pdu_to_string(pdu_number).map_err(|_| io::ErrorKind::InvalidData)?
+        gsm7_pdu_to_string(pdu_number)?
     } else {
         let utf8 = address_numeric_from_pdu(pdu_number)?;
         if toa == toa_international {
@@ -82,12 +84,12 @@ pub(crate) fn address_from_pdu(pdu: &str, is_smsc: bool) -> Result<(String, usiz
     Ok((utf8, pdu_len_chars))
 }
 
-fn address_numeric_to_pdu(utf8: &str) -> Result<String, io::Error> {
+fn address_numeric_to_pdu(utf8: &str) -> Result<String, Error> {
     let mut result = String::new();
     for c in utf8.chars() {
         match c {
             '0'..='9' => result.push(c),
-            _ => return Err(io::ErrorKind::InvalidData.into()),
+            _ => return Err(Error::new("Invalid number")),
         }
     }
 
@@ -96,27 +98,27 @@ fn address_numeric_to_pdu(utf8: &str) -> Result<String, io::Error> {
     }
     let mut pdu = String::new();
     for i in (0..result.len()).step_by(2) {
-        pdu.push(result.chars().nth(i + 1).unwrap());
-        pdu.push(result.chars().nth(i).unwrap());
+        pdu.push(result.chars().nth(i + 1).ok_or(Error::noneopt())?);
+        pdu.push(result.chars().nth(i).ok_or(Error::noneopt())?);
     }
     Ok(pdu)
 }
 
-fn address_numeric_from_pdu(pdu: &str) -> Result<String, io::Error> {
+fn address_numeric_from_pdu(pdu: &str) -> Result<String, Error> {
     let mut result = String::new();
     for c in pdu.chars() {
         match c {
             '0'..='9' | 'F' => result.push(c),
-            _ => return Err(io::ErrorKind::InvalidData.into()),
+            _ => return Err(Error::new("Invalid HEX char")),
         }
     }
     if result.len() % 2 == 1 {
-        return Err(io::ErrorKind::InvalidData.into());
+        return Err(Error::new("Length of HEX string is not even"));
     }
     let mut utf8 = String::new();
     for i in (0..result.len()).step_by(2) {
-        utf8.push(result.chars().nth(i + 1).unwrap());
-        utf8.push(result.chars().nth(i).unwrap());
+        utf8.push(result.chars().nth(i + 1).ok_or(Error::noneopt())?);
+        utf8.push(result.chars().nth(i).ok_or(Error::noneopt())?);
     }
     if utf8.ends_with('F') {
         utf8.pop();
@@ -127,6 +129,7 @@ fn address_numeric_from_pdu(pdu: &str) -> Result<String, io::Error> {
 
 #[cfg(test)]
 mod tests {
+    #[warn(clippy::unwrap_used, clippy::expect_used)]
     use super::*;
 
     const PHONE_TO_PDU: &[(&str, &str)] = &[

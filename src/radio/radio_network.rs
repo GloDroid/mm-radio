@@ -10,9 +10,12 @@ use crate::{
         mm_modem_3gpp_proxy::Modem3gppProxy, mm_modem_proxy::ModemProxy,
         mm_signal_proxy::SignalProxy,
     },
-    utils::iradio::{
-        declare_async_iradio, def, entry_check, ind, invalid_arg, not_implemented, okay, shared,
-        sharedmut,
+    utils::{
+        error::Error,
+        iradio::{
+            declare_async_iradio, def, entry_check, ind, invalid_arg, not_implemented, okay,
+            shared, sharedmut,
+        },
     },
 };
 use android_hardware_radio::aidl::android::hardware::radio::{
@@ -58,33 +61,34 @@ pub struct RadioNetwork {
 }
 
 impl RadioNetworkShared {
-    pub fn bind(shared_in: &Arc<RwLock<RadioNetworkShared>>, modem_proxy: &ModemProxy<'static>) {
+    pub(crate) fn bind(
+        shared_in: &Arc<RwLock<RadioNetworkShared>>,
+        modem_proxy: &ModemProxy<'static>,
+    ) -> Result<(), Error> {
         /* Setup shared structure */
         {
             let mut shared = block_on(shared_in.write());
             shared.modem_proxy = Some(modem_proxy.clone());
             let conn = modem_proxy.connection();
             let modem_path = modem_proxy.path().to_string();
-            shared.modem_3gpp_proxy = Some(
-                block_on(Modem3gppProxy::builder(conn).path(modem_path.clone()).unwrap().build())
-                    .unwrap(),
-            );
-            shared.signal_proxy = Some(
-                block_on(SignalProxy::builder(conn).path(modem_path).unwrap().build()).unwrap(),
-            );
+            shared.modem_3gpp_proxy =
+                Some(block_on(Modem3gppProxy::builder(conn).path(modem_path.clone())?.build())?);
+            shared.signal_proxy =
+                Some(block_on(SignalProxy::builder(conn).path(modem_path)?.build())?);
 
             shared.modem_bound = true;
         }
         /* Subscribe RSSI events */
-        {
-            let shared_cl = shared_in.clone();
-            spawn(async move {
-                let sp = shared_cl.read().await.signal_proxy.as_ref().unwrap().clone();
+        let shared_cl = shared_in.clone();
+        spawn(async move {
+            let result: Result<(), Error> = try {
+                let sp =
+                    shared_cl.read().await.signal_proxy.as_ref().ok_or(Error::noneopt())?.clone();
                 let mut lte_prop = sp.receive_lte_changed().await;
                 loop {
                     select! {
                         e = lte_prop.next().fuse() => {
-                            let state = e.unwrap().get().await.unwrap();
+                            let state = e.ok_or(Error::noneopt())?.get().await?;
                             info!("Signal LTE: {:?}", state);
                             let mut shared = shared_cl.write().await;
                             let res: Option<()> = try {
@@ -105,30 +109,35 @@ impl RadioNetworkShared {
                             }
                             info!("Signal LTE reported: {:?}", shared.signal_strength.lte);
                             drop(shared);
-                            Self::notify_frontend(&shared_cl).await;
+                            Self::notify_frontend(&shared_cl).await?;
                         },
                         complete => break,
                     };
                 }
-
-                info!("Exit");
-            });
-        }
+            };
+            result.unwrap_or_else(|e| e.log());
+            info!("Exit");
+        });
+        Ok(())
     }
 
-    pub fn unbind(shared_in: &Arc<RwLock<RadioNetworkShared>>) {
+    pub(crate) fn unbind(shared_in: &Arc<RwLock<RadioNetworkShared>>) -> Result<(), Error> {
         let mut shared = block_on(shared_in.write());
         shared.modem_bound = false;
         shared.modem_proxy = None;
         shared.modem_3gpp_proxy = None;
+        shared.signal_proxy = None;
+        Ok(())
     }
 
-    pub async fn notify_frontend(shared_in: &Arc<RwLock<RadioNetworkShared>>) {
+    pub(crate) async fn notify_frontend(
+        shared_in: &Arc<RwLock<RadioNetworkShared>>,
+    ) -> Result<(), Error> {
         let shared = shared_in.read().await;
         if let Some(ind) = &shared.indication {
-            ind.currentSignalStrength(RadioIndicationType::UNSOLICITED, &shared.signal_strength)
-                .unwrap();
+            ind.currentSignalStrength(RadioIndicationType::UNSOLICITED, &shared.signal_strength)?;
         }
+        Ok(())
     }
 }
 
@@ -196,7 +205,17 @@ impl IRadioNetworkAsyncServer for RadioNetwork {
 
     async fn getDataRegistrationState(&self, serial: i32) -> binder::Result<()> {
         entry_check!(&self, serial, getDataRegistrationStateResponse, &def());
-        okay!(&self, serial, getDataRegistrationStateResponse, &def())
+        let rsr = RegStateResult {
+            regState: RegState::REG_HOME,
+            rat: RadioTechnology::LTE,
+            cellIdentity: CellIdentity::Lte(get_fake_cell_identity_lte()),
+            registeredPlmn: "25501".to_string(),
+            accessTechnologySpecificInfo: AccessTechnologySpecificInfo::EutranInfo(
+                Default::default(),
+            ),
+            ..Default::default()
+        };
+        okay!(&self, serial, getDataRegistrationStateResponse, &rsr)
     }
 
     async fn getImsRegistrationState(&self, serial: i32) -> binder::Result<()> {
@@ -211,11 +230,14 @@ impl IRadioNetworkAsyncServer for RadioNetwork {
 
     async fn getOperator(&self, serial: i32) -> binder::Result<()> {
         entry_check!(&self, serial, getOperatorResponse, "", "", "");
-        let shared = shared!(&self);
-        let modem_3gpp_proxy = shared.modem_3gpp_proxy.as_ref().unwrap();
-        let op_name = modem_3gpp_proxy.operator_name().await.unwrap();
-        let op_code = modem_3gpp_proxy.operator_code().await.unwrap();
-        drop(shared);
+        let result: Result<(String, String), Error> = try {
+            let shared = shared!(&self);
+            let modem_3gpp_proxy = shared.modem_3gpp_proxy.as_ref().ok_or(Error::noneopt())?;
+            let op_name = modem_3gpp_proxy.operator_name().await?;
+            let op_code = modem_3gpp_proxy.operator_code().await?;
+            (op_name, op_code)
+        };
+        let (op_name, op_code) = result?;
         okay!(&self, serial, getOperatorResponse, op_name.as_str(), "", op_code.as_str())
     }
 
@@ -361,16 +383,17 @@ impl IRadioNetworkAsyncServer for RadioNetwork {
         }
 
         entry_check!(&self, serial, setSignalStrengthReportingCriteriaResponse);
-        {
+        let result: Result<(), Error> = try {
             let shared = shared!(&self);
             // Thresholds-based reporting doesn't work on PP:
             // let thresholds = HashMap::from([
             //     ("rssi-threshold", 1u32.into()),
             //     ("error-rate-threshold", false.into()),
             // ]);
-            // shared.signal_proxy.as_ref().unwrap().setup_thresholds(thresholds).await.unwrap();
-            shared.signal_proxy.as_ref().unwrap().setup(10).await.unwrap();
-        }
+            // shared.signal_proxy.as_ref().ok_or(Error::noneopt())?.setup_thresholds(thresholds).await?;
+            shared.signal_proxy.as_ref().ok_or(Error::noneopt())?.setup(10).await?;
+        };
+        result?;
         okay!(&self, serial, setSignalStrengthReportingCriteriaResponse)
     }
 

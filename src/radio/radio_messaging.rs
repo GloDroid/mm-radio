@@ -16,8 +16,9 @@ use crate::{
         mm_sms_proxy::SmsProxy,
     },
     utils::{
+        error::Error,
         iradio::{
-            declare_async_iradio, def, entry_check, err, not_implemented, okay, shared, sharedmut,
+            declare_async_iradio, def, entry_check, not_implemented, okay, shared, sharedmut,
         },
         sms_deliver_encode::sms_deliver_encode,
         sms_submit_decode::sms_submit_decode,
@@ -63,7 +64,10 @@ pub struct RadioMessaging {
 }
 
 impl RadioMessagingShared {
-    pub fn bind(shared_in: &Arc<RwLock<RadioMessagingShared>>, modem_proxy: &ModemProxy<'static>) {
+    pub(crate) fn bind(
+        shared_in: &Arc<RwLock<RadioMessagingShared>>,
+        modem_proxy: &ModemProxy<'static>,
+    ) -> Result<(), Error> {
         /* Setup shared structure */
         {
             let mut shared = block_on(shared_in.write());
@@ -71,24 +75,24 @@ impl RadioMessagingShared {
             let conn = modem_proxy.connection();
             let path = modem_proxy.path().to_string();
             shared.messaging_proxy =
-                Some(block_on(MessagingProxy::builder(conn).path(path).unwrap().build()).unwrap());
+                Some(block_on(MessagingProxy::builder(conn).path(path)?.build())?);
             shared.modem_bound = true;
         }
 
         /* Subscribe for modem enable events to query pending SMS */
-        {
-            let shared_in_c = shared_in.clone();
-            spawn(async move {
+        let shared_in_c = shared_in.clone();
+        spawn(async move {
+            let result: Result<(), Error> = try {
                 let mproxy = {
                     let shared = shared_in_c.read().await;
-                    shared.modem_proxy.as_ref().unwrap().clone()
+                    shared.modem_proxy.as_ref().ok_or(Error::noneopt())?.clone()
                 };
                 let _state = mproxy.state().await; /* get state here to avoid getting initial state below */
                 let mut st_prop = mproxy.receive_state_changed().await;
                 loop {
                     select! {
                         e = st_prop.next().fuse() => {
-                            let state = e.unwrap().get().await.unwrap();
+                            let state = e.ok_or(Error::noneopt())?.get().await?;
                             if state == mm_modem_state::ENABLED || state == mm_modem_state::REGISTERED {
                                 info!("Modem enabled, querying pending SMS");
                                 let _ = Self::query_pending_sms(&shared_in_c).await;
@@ -97,48 +101,51 @@ impl RadioMessagingShared {
                         complete => break,
                     };
                 }
-            });
-        }
+            };
+            result.unwrap_or_else(|e| e.log());
+        });
 
         /* Subscribe for new received SMS events */
-        {
-            let shared_in_c = shared_in.clone();
-            spawn(async move {
+        let shared_in_c = shared_in.clone();
+        spawn(async move {
+            let result: Result<(), Error> = try {
                 let mproxy = {
                     let shared = shared_in_c.read().await;
-                    shared.messaging_proxy.as_ref().unwrap().clone()
+                    shared.messaging_proxy.as_ref().ok_or(Error::noneopt())?.clone()
                 };
-                let mut added_signal = mproxy.receive_added().await.unwrap();
+                let mut added_signal = mproxy.receive_added().await?;
                 loop {
                     select! {
                         added = added_signal.next().fuse() => {
-                            let added = added.unwrap();
-                            let received = added.args().unwrap().received;
+                            let added = added.ok_or(Error::noneopt())?;
+                            let received = added.args()?.received;
                             if received {
-                                let path = added.args().unwrap().path;
+                                let path = added.args()?.path;
                                 spawn(Self::handle_message_received(shared_in_c.clone(), path.into()));
                             }
                         }
                         complete => break,
                     }
                 }
-            });
-        }
+            };
+            result.unwrap_or_else(|e| e.log());
+        });
+        Ok(())
     }
 
-    pub fn unbind(shared_in: &Arc<RwLock<RadioMessagingShared>>) {
+    pub(crate) fn unbind(shared_in: &Arc<RwLock<RadioMessagingShared>>) -> Result<(), Error> {
         let mut shared = block_on(shared_in.write());
-        shared.modem_bound = false;
         shared.modem_proxy = None;
+        shared.messaging_proxy = None;
+        shared.modem_bound = false;
+        Ok(())
     }
 
-    async fn query_pending_sms(
-        shared_in: &Arc<RwLock<RadioMessagingShared>>,
-    ) -> Result<(), zbus::Error> {
+    async fn query_pending_sms(shared_in: &Arc<RwLock<RadioMessagingShared>>) -> Result<(), Error> {
         let shared = shared_in.read().await;
-        let messages = shared.messaging_proxy.as_ref().unwrap().messages().await?;
+        let messages = shared.messaging_proxy.as_ref().ok_or(Error::noneopt())?.messages().await?;
 
-        let conn = shared.modem_proxy.as_ref().unwrap().connection();
+        let conn = shared.modem_proxy.as_ref().ok_or(Error::noneopt())?.connection();
         for path in messages {
             let sms_proxy = SmsProxy::builder(conn).path(path.clone())?.build().await?;
             let state = sms_proxy.state().await?;
@@ -150,22 +157,29 @@ impl RadioMessagingShared {
         Ok(())
     }
 
-    async fn delete_sms(shared_in: Arc<RwLock<RadioMessagingShared>>, path: OwnedObjectPath) {
+    async fn delete_sms(
+        shared_in: Arc<RwLock<RadioMessagingShared>>,
+        path: OwnedObjectPath,
+    ) -> Result<(), Error> {
         info!("Deleting SMS message: {path}");
 
-        let result =
-            shared_in.as_ref().read().await.messaging_proxy.as_ref().unwrap().delete(&path).await;
-
-        if let Err(e) = result {
-            info!("Failed to delete SMS message at {path}: {e}");
-        }
+        shared_in
+            .as_ref()
+            .read()
+            .await
+            .messaging_proxy
+            .as_ref()
+            .ok_or(Error::noneopt())?
+            .delete(&path)
+            .await?;
+        Ok(())
     }
 
     /* must be a spawned async task */
     async fn handle_message_received(
         shared_in: Arc<RwLock<RadioMessagingShared>>,
         path: OwnedObjectPath,
-    ) -> Result<(), zbus::Error> {
+    ) -> Result<(), Error> {
         /* Avoid duplicates */
         {
             let mut shared = shared_in.write().await;
@@ -179,14 +193,15 @@ impl RadioMessagingShared {
 
         let sms_proxy = {
             let shared = shared_in.read().await;
-            let conn = shared.modem_proxy.as_ref().unwrap().connection();
-            SmsProxy::builder(conn).path(path.clone()).unwrap().build().await.unwrap()
+            let conn = shared.modem_proxy.as_ref().ok_or(Error::noneopt())?.connection();
+            SmsProxy::builder(conn).path(path.clone())?.build().await?
         };
 
         info!("New SMS message receiving: {path}");
 
         loop {
-            match sms_proxy.receive_state_changed().await.next().await.unwrap().get().await? {
+            let prop = sms_proxy.receive_state_changed().await.next().await;
+            match prop.ok_or(Error::noneopt())?.get().await? {
                 RECEIVING => continue,
                 RECEIVED => break,
                 s => {
@@ -202,7 +217,7 @@ impl RadioMessagingShared {
 
         info!("Received message from '{}' at '{}' with text '{}'", number, timestamp, text);
 
-        let pdu = sms_deliver_encode(number.as_str(), text.as_str(), timestamp.as_str());
+        let pdu = sms_deliver_encode(number.as_str(), text.as_str(), timestamp.as_str())?;
 
         info!("DELIVER PDU: {}", pdu);
 
@@ -210,7 +225,7 @@ impl RadioMessagingShared {
         let full_pdu = format!("00{pdu}"); // Add null SMSC field
         for i in (0..full_pdu.len()).step_by(2) {
             let byte = &full_pdu[i..i + 2];
-            let byte = u8::from_str_radix(byte, 16).unwrap();
+            let byte = u8::from_str_radix(byte, 16)?;
             pdu_bytes.push(byte);
         }
 
@@ -229,8 +244,8 @@ impl RadioMessagingShared {
             }
             let (sms_processed, wait_sms_processed) = async_std::channel::bounded::<bool>(1);
             shared.incoming_sms_confirmation = Some(sms_processed);
-            let ind = ind.unwrap();
-            ind.newSms(RadioIndicationType::UNSOLICITED, &pdu_bytes).unwrap();
+            let ind = ind.ok_or(Error::noneopt())?;
+            ind.newSms(RadioIndicationType::UNSOLICITED, &pdu_bytes)?;
             drop(shared);
 
             let fut = wait_sms_processed.into_future();
@@ -242,7 +257,7 @@ impl RadioMessagingShared {
             break;
         }
 
-        Self::delete_sms(shared_in, path).await;
+        Self::delete_sms(shared_in, path).await?;
         Ok(())
     }
 }
@@ -266,12 +281,13 @@ impl IRadioMessagingAsyncServer for RadioMessaging {
     ) -> binder::Result<()> {
         entry_check!(&self, serial, acknowledgeLastIncomingGsmSmsResponse);
 
-        {
+        let result: Result<(), Error> = try {
             let shared = shared!(&self);
             if let Some(confirmation) = &shared.incoming_sms_confirmation {
-                confirmation.send(true).await.unwrap();
+                confirmation.send(true).await?;
             }
-        }
+        };
+        result?;
 
         okay!(&self, serial, acknowledgeLastIncomingGsmSmsResponse)
     }
@@ -332,49 +348,46 @@ impl IRadioMessagingAsyncServer for RadioMessaging {
         entry_check!(&self, serial, sendSmsResponse, &def());
         info!("Sending SMS: {:?}", message);
 
-        let decoded = sms_submit_decode(message.pdu.as_str());
-        if decoded.is_none() {
-            error!("Failed to decode SMS");
-            return err!(&self, serial, RadioError::INVALID_ARGUMENTS, sendSmsResponse, &def());
-        }
+        let result: Result<(), Error> = try {
+            let (number, text) = sms_submit_decode(message.pdu.as_str())?;
 
-        let (number, text) = decoded.unwrap();
+            info!("Sending SMS to '{}' with text '{}'", number, text);
 
-        info!("Sending SMS to '{}' with text '{}'", number, text);
+            let shared = shared!(&self);
+            let messaging_proxy = shared.messaging_proxy.as_ref().ok_or(Error::noneopt())?;
 
-        let shared = shared!(&self);
-        let messaging_proxy = shared.messaging_proxy.as_ref().unwrap();
+            let mut sms_props = HashMap::new();
+            sms_props.insert("number", number.into());
+            sms_props.insert("text", text.into());
 
-        let mut sms_props = HashMap::new();
-        sms_props.insert("number", number.into());
-        sms_props.insert("text", text.into());
-
-        let path = messaging_proxy.create(sms_props).await.unwrap();
-        info!("SMS created at {}", path.to_string());
-        let conn = shared.modem_proxy.as_ref().unwrap().connection();
-        let sms_proxy = SmsProxy::builder(conn).path(path).unwrap().build().await.unwrap();
-        let shared_c = self.shared.clone();
-        spawn(async move {
-            let status = sms_proxy.send().await;
-            let shared = shared_c.read().await;
-            if status.is_err() {
-                error!("Failed to send SMS: {}, {}", serial, status.unwrap_err());
-                shared
-                    .response
-                    .as_ref()
-                    .unwrap()
-                    .sendSmsResponse(&respond(serial, RadioError::SMS_SEND_FAIL_RETRY), &def())
-                    .unwrap();
-                return;
-            }
-            info!("SMS sent: {}", serial);
-            shared
-                .response
-                .as_ref()
-                .unwrap()
-                .sendSmsResponse(&respond(serial, RadioError::NONE), &def())
-                .unwrap();
-        });
+            let path = messaging_proxy.create(sms_props).await?;
+            info!("SMS created at {}", path.to_string());
+            let conn = shared.modem_proxy.as_ref().ok_or(Error::noneopt())?.connection();
+            let sms_proxy = SmsProxy::builder(conn).path(path)?.build().await?;
+            let shared_c = self.shared.clone();
+            spawn(async move {
+                let result: Result<(), Error> = try {
+                    let status = sms_proxy.send().await;
+                    let shared = shared_c.read().await;
+                    if let Err(e) = status {
+                        error!("Failed to send SMS: {}, {}", serial, e);
+                        shared.response.as_ref().ok_or(Error::noneopt())?.sendSmsResponse(
+                            &respond(serial, RadioError::SMS_SEND_FAIL_RETRY),
+                            &def(),
+                        )?;
+                        return;
+                    }
+                    info!("SMS sent: {}", serial);
+                    shared
+                        .response
+                        .as_ref()
+                        .ok_or(Error::noneopt())?
+                        .sendSmsResponse(&respond(serial, RadioError::NONE), &def())?;
+                };
+                result.unwrap_or_else(|e| e.log());
+            });
+        };
+        result?;
 
         Ok(())
     }

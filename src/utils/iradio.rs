@@ -52,9 +52,10 @@ macro_rules! shared {
 }
 
 macro_rules! ind {
-    (&$self:ident) => {
-        shared!(&$self).indication.as_ref().ok_or(binder::StatusCode::NO_INIT)?
-    };
+    (&$self:ident) => {{
+        use crate::utils::error::Error;
+        shared!(&$self).indication.as_ref().ok_or(Error::noneopt())?
+    }};
 }
 
 macro_rules! resp {
@@ -140,21 +141,8 @@ macro_rules! okay {
     }};
 }
 
-macro_rules! err {
-    (&$self: ident, $serial: expr, $err: expr, $respfn: ident $(, $opt:expr)*) => {{
-        use crate::utils::iradio::respond;
-        let shared = shared!(&$self);
-        shared
-            .response
-            .as_ref()
-            .unwrap()
-            .$respfn(&respond($serial, $err), $($opt), *)?;
-        Ok(())
-    }};
-}
-
 pub(crate) use {
-    entry_check, err, function, ind, invalid_arg, not_implemented, okay, resp, resp_err, shared,
+    entry_check, function, ind, invalid_arg, not_implemented, okay, resp, resp_err, shared,
     sharedmut,
 };
 

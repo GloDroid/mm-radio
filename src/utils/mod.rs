@@ -6,6 +6,7 @@
  */
 
 pub(crate) mod binder_async;
+pub(crate) mod error;
 pub(crate) mod iradio;
 pub(crate) mod pdu_helpers;
 pub(crate) mod sms_deliver_encode;
