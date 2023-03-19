@@ -20,7 +20,6 @@ use crate::{
 use android_hardware_radio_config::aidl::android::hardware::radio::config::IRadioConfig::*;
 
 use android_logger::LogId;
-use async_std::task::block_on;
 use log::{error, info};
 use utils::error::Error;
 
@@ -58,8 +57,7 @@ fn main() {
 
         info!("mm-radio is starting.");
 
-        let connection = block_on(zbus::Connection::system())?;
-        let rhm = create_radio_hal_manager(&connection)?;
+        let rhm = create_radio_hal_manager()?;
 
         radio_hal_manager::add_binder_service!(RadioConfig::default(), RadioConfig, "default")?;
         const MAX_SLOT: usize = 3;

@@ -9,10 +9,11 @@ use std::{
     cell::RefCell,
     collections::HashMap,
     sync::{Arc, Mutex},
+    time::Duration,
 };
 
 use crate::{
-    mm_zbus::{mm_modem_proxy::ModemProxy, mm_proxy::ModemManager1Proxy},
+    mm_zbus::mm_modem_proxy::ModemProxy,
     radio::{
         radio_data::{RadioData, RadioDataShared},
         radio_messaging::{RadioMessaging, RadioMessagingShared},
@@ -67,27 +68,13 @@ struct FrontendBinding {
     modem_path: RefCell<Option<String>>,
 }
 
-pub struct RadioHalManager<'a> {
-    _proxy: ModemManager1Proxy<'a>,
-    omproxy: ObjectManagerProxy<'a>,
+pub struct RadioHalManager {
     objects: Mutex<Vec<String>>,
     frontends: Mutex<HashMap<String /*slot*/, FrontendBinding>>,
 }
 
-pub(crate) fn create_radio_hal_manager<'a>(
-    connection: &Connection,
-) -> Result<Arc<RadioHalManager<'a>>, Error> {
-    let proxy = block_on(ModemManager1Proxy::new(connection))?;
-    let omproxy = block_on(
-        ObjectManagerProxy::builder(connection)
-            .destination("org.freedesktop.ModemManager1")?
-            .path("/org/freedesktop/ModemManager1")?
-            .build(),
-    )?;
-
+pub(crate) fn create_radio_hal_manager() -> Result<Arc<RadioHalManager>, Error> {
     let rhm = Arc::new(RadioHalManager {
-        _proxy: proxy,
-        omproxy,
         objects: Mutex::new(Vec::new()),
         frontends: Mutex::new(HashMap::new()),
     });
@@ -96,7 +83,8 @@ pub(crate) fn create_radio_hal_manager<'a>(
 }
 
 pub(crate) struct Callbacks {
-    pub modem_added: fn(rhm: &RadioHalManager, path: &str) -> Result<(), Error>,
+    pub modem_added:
+        fn(connection: &Connection, rhm: &RadioHalManager, path: &str) -> Result<(), Error>,
     pub modem_removed: fn(rhm: &RadioHalManager, path: &str) -> Result<(), Error>,
 }
 
@@ -131,9 +119,9 @@ pub(crate) fn register_frontend_element(rhm: &RadioHalManager, name: &str) -> Re
     Ok(())
 }
 
-pub(crate) fn bind_modems(rhm: &Arc<RadioHalManager<'static>>) -> Result<(), Error> {
+pub(crate) fn bind_modems(rhm: &Arc<RadioHalManager>) -> Result<(), Error> {
     let cbks = Callbacks {
-        modem_added: |rhm, path: &str| -> Result<(), Error> {
+        modem_added: |connection, rhm, path: &str| -> Result<(), Error> {
             info!("Adding modem: {}", path);
             let frontends = rhm.frontends.lock().map_err(|_| Error::poisoned())?;
             /* Search for free slot */
@@ -145,7 +133,7 @@ pub(crate) fn bind_modems(rhm: &Arc<RadioHalManager<'static>>) -> Result<(), Err
             feb.modem_path.swap(&RefCell::new(Some(path.to_string())));
 
             let modem_proxy = {
-                let builder = ModemProxy::builder(rhm.omproxy.connection());
+                let builder = ModemProxy::builder(connection);
                 block_on(builder.path(path.to_string())?.build())?
             };
 
@@ -189,75 +177,89 @@ pub(crate) fn bind_modems(rhm: &Arc<RadioHalManager<'static>>) -> Result<(), Err
     Ok(())
 }
 
-fn spawn_object_manager(
-    rhmarg: &Arc<RadioHalManager<'static>>,
-    cbks: Callbacks,
-) -> Result<(), Error> {
+fn spawn_object_manager(rhmarg: &Arc<RadioHalManager>, cbks: Callbacks) -> Result<(), Error> {
     let rhm = rhmarg.clone();
 
-    let mo = block_on(rhm.omproxy.get_managed_objects())?;
-    for (path, _) in mo {
-        let result = (cbks.modem_added)(&rhm, &path);
-        if let Err(e) = result {
-            e.log();
-            continue;
-        }
-        rhm.objects.lock().map_err(|_| Error::poisoned())?.push(path.to_string());
-    }
-
     spawn(async move {
-        let result: Result<(), Error> = try {
-            let omproxy = rhm.omproxy.clone();
-            let added = block_on(omproxy.receive_interfaces_added())?;
-            let removed = block_on(omproxy.receive_interfaces_removed())?;
-            let mut added = added;
-            let mut removed = removed;
-            loop {
-                select! {
-                    e = added.next().fuse() => {
-                        let e = e.ok_or(Error::noneopt())?;
-                        let path = e.args()?.object_path;
-                        let mut objects = rhm.objects.lock().map_err(|_| Error::poisoned())?;
-                        let index = objects.iter().position(|x| x == &path.to_string());
-                        if index.is_some() {
+        loop {
+            let result: Result<(), Error> = try {
+                let connection = block_on(zbus::Connection::system())?;
+
+                let omproxy = block_on(
+                    ObjectManagerProxy::builder(&connection)
+                        .destination("org.freedesktop.ModemManager1")?
+                        .path("/org/freedesktop/ModemManager1")?
+                        .build(),
+                )?;
+
+                let mo = block_on(omproxy.get_managed_objects())?;
+                for (path, _) in mo {
+                    let result = (cbks.modem_added)(&connection, &rhm, &path);
+                    if let Err(e) = result {
+                        e.log();
+                        continue;
+                    }
+                    rhm.objects.lock().map_err(|_| Error::poisoned())?.push(path.to_string());
+                }
+
+                let omproxy = omproxy.clone();
+                let added = block_on(omproxy.receive_interfaces_added())?;
+                let removed = block_on(omproxy.receive_interfaces_removed())?;
+                let mut added = added;
+                let mut removed = removed;
+                loop {
+                    select! {
+                        e = added.next().fuse() => {
+                            let e = e.ok_or(Error::noneopt())?;
+                            let path = e.args()?.object_path;
+                            let mut objects = rhm.objects.lock().map_err(|_| Error::poisoned())?;
+                            let index = objects.iter().position(|x| x == &path.to_string());
+                            if index.is_some() {
+                                let result = (cbks.modem_removed)(&rhm, &path);
+                                if let Err(e) = result {
+                                    e.log();
+                                    continue;
+                                }
+                            }
+                            let result = (cbks.modem_added)(&connection, &rhm, &path);
+                            if let Err(e) = result {
+                                e.log();
+                                continue;
+                            }
+                            if index.is_none() {
+                                objects.push(path.to_string());
+                            }
+                        },
+                        e = removed.next().fuse() => {
+                            let e = e.ok_or(Error::noneopt())?;
+                            let path = e.args()?.object_path;
                             let result = (cbks.modem_removed)(&rhm, &path);
                             if let Err(e) = result {
                                 e.log();
                                 continue;
                             }
+                            let mut objects = rhm.objects.lock().map_err(|_| Error::poisoned())?;
+                            let path = e.path().ok_or(Error::noneopt())?.to_string();
+                            let index = objects.iter().position(|x| x == &path);
+                            if let Some(index) = index {
+                                objects.remove(index);
+                            }
                         }
-                        let result = (cbks.modem_added)(&rhm, &path);
-                        if let Err(e) = result {
-                            e.log();
-                            continue;
-                        }
-                        if index.is_none() {
-                            objects.push(path.to_string());
-                        }
-                    },
-                    e = removed.next().fuse() => {
-                        let e = e.ok_or(Error::noneopt())?;
-                        let path = e.args()?.object_path;
-                        let result = (cbks.modem_removed)(&rhm, &path);
-                        if let Err(e) = result {
-                            e.log();
-                            continue;
-                        }
-                        let mut objects = rhm.objects.lock().map_err(|_| Error::poisoned())?;
-                        let path = e.path().ok_or(Error::noneopt())?.to_string();
-                        let index = objects.iter().position(|x| x == &path);
-                        if let Some(index) = index {
-                            objects.remove(index);
-                        }
-                    }
-                    complete => {
-                        info!("Complete");
-                        break;
-                    },
-                };
-            }
-        };
-        result.unwrap_or_else(|e| e.log());
+                        complete => {
+                            info!("Complete");
+                            break;
+                        },
+                    };
+                }
+            };
+            if let Err(err) = result {
+                err.log();
+                info!("Failed to subscribe to modemmanager events. Retry in 10s.");
+                async_std::task::sleep(Duration::from_secs(10)).await;
+                continue;
+            };
+            break;
+        }
     });
 
     Ok(())
