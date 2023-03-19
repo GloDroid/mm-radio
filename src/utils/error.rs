@@ -1,3 +1,10 @@
+/*
+ * mm-radio HAL (https://github.com/GloDroid/mm-radio)
+ *
+ * SPDX-License-Identifier: GPL-3.0-only
+ * Copyright (C) 2023 The GloDroid Project
+ */
+
 use std::{error, panic::Location};
 
 use log::error;
