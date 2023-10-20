@@ -1,4 +1,4 @@
-FROM ubuntu:22.10
+FROM ubuntu:23.10
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -6,7 +6,7 @@ ENV PATH="/home/user/bin:${PATH}"
 
 # Taking into account layer structure, everything should be done within one layer.
 RUN apt-get update && apt-get upgrade -y && \
-    apt-get install -y clang-15 clang git llvm make wget sudo rsync lld curl
+    apt-get install -y clang-17 clang git llvm make wget sudo rsync lld curl
 
 ENV RUN_USER user
 ENV RUN_UID 1000
@@ -15,7 +15,7 @@ ENV USER_HOME /home/user
 
 RUN mkdir -pv ${USER_HOME}
 # Create new user
-RUN adduser \
+RUN userdel -r ubuntu && adduser \
     --gecos 'Build User' \
     --shell '/usr/bin/bash' \
     --uid ${RUN_UID} \
