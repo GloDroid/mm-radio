@@ -3,11 +3,11 @@
 #![allow(missing_docs)]
 pub use binder;
 pub mod aidl {
-    pub mod android {
-        pub mod hardware {
-            pub mod radio {
-                pub mod voice {
-                    pub mod AudioQuality {
+  pub mod android {
+    pub mod hardware {
+      pub mod radio {
+        pub mod voice {
+          pub mod AudioQuality {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #![allow(non_upper_case_globals)]
@@ -30,7 +30,7 @@ pub mod aidl {
              pub use super::r#AudioQuality as _7_android_8_hardware_5_radio_5_voice_12_AudioQuality;
             }
           }
-                    pub mod Call {
+          pub mod Call {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #[derive(Debug)]
@@ -164,7 +164,7 @@ pub mod aidl {
              pub use super::r#Call as _7_android_8_hardware_5_radio_5_voice_4_Call;
             }
           }
-                    pub mod CallForwardInfo {
+          pub mod CallForwardInfo {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #[derive(Debug)]
@@ -239,7 +239,7 @@ pub mod aidl {
              pub use super::r#CallForwardInfo as _7_android_8_hardware_5_radio_5_voice_15_CallForwardInfo;
             }
           }
-                    pub mod CdmaCallWaiting {
+          pub mod CdmaCallWaiting {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #[derive(Debug)]
@@ -323,7 +323,7 @@ pub mod aidl {
              pub use super::r#CdmaCallWaiting as _7_android_8_hardware_5_radio_5_voice_15_CdmaCallWaiting;
             }
           }
-                    pub mod CdmaDisplayInfoRecord {
+          pub mod CdmaDisplayInfoRecord {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #[derive(Debug)]
@@ -364,7 +364,7 @@ pub mod aidl {
              pub use super::r#CdmaDisplayInfoRecord as _7_android_8_hardware_5_radio_5_voice_21_CdmaDisplayInfoRecord;
             }
           }
-                    pub mod CdmaInformationRecord {
+          pub mod CdmaInformationRecord {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #[derive(Debug)]
@@ -458,7 +458,7 @@ pub mod aidl {
              pub use super::r#CdmaInformationRecord as _7_android_8_hardware_5_radio_5_voice_21_CdmaInformationRecord;
             }
           }
-                    pub mod CdmaLineControlInfoRecord {
+          pub mod CdmaLineControlInfoRecord {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #[derive(Debug)]
@@ -516,7 +516,7 @@ pub mod aidl {
              pub use super::r#CdmaLineControlInfoRecord as _7_android_8_hardware_5_radio_5_voice_25_CdmaLineControlInfoRecord;
             }
           }
-                    pub mod CdmaNumberInfoRecord {
+          pub mod CdmaNumberInfoRecord {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #[derive(Debug)]
@@ -581,7 +581,7 @@ pub mod aidl {
              pub use super::r#CdmaNumberInfoRecord as _7_android_8_hardware_5_radio_5_voice_20_CdmaNumberInfoRecord;
             }
           }
-                    pub mod CdmaOtaProvisionStatus {
+          pub mod CdmaOtaProvisionStatus {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #![allow(non_upper_case_globals)]
@@ -606,7 +606,7 @@ pub mod aidl {
              pub use super::r#CdmaOtaProvisionStatus as _7_android_8_hardware_5_radio_5_voice_22_CdmaOtaProvisionStatus;
             }
           }
-                    pub mod CdmaRedirectingNumberInfoRecord {
+          pub mod CdmaRedirectingNumberInfoRecord {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #[derive(Debug)]
@@ -659,7 +659,7 @@ pub mod aidl {
              pub use super::r#CdmaRedirectingNumberInfoRecord as _7_android_8_hardware_5_radio_5_voice_31_CdmaRedirectingNumberInfoRecord;
             }
           }
-                    pub mod CdmaSignalInfoRecord {
+          pub mod CdmaSignalInfoRecord {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #[derive(Debug)]
@@ -717,7 +717,7 @@ pub mod aidl {
              pub use super::r#CdmaSignalInfoRecord as _7_android_8_hardware_5_radio_5_voice_20_CdmaSignalInfoRecord;
             }
           }
-                    pub mod CdmaT53AudioControlInfoRecord {
+          pub mod CdmaT53AudioControlInfoRecord {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #[derive(Debug)]
@@ -763,7 +763,7 @@ pub mod aidl {
              pub use super::r#CdmaT53AudioControlInfoRecord as _7_android_8_hardware_5_radio_5_voice_29_CdmaT53AudioControlInfoRecord;
             }
           }
-                    pub mod CdmaT53ClirInfoRecord {
+          pub mod CdmaT53ClirInfoRecord {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #[derive(Debug)]
@@ -803,7 +803,7 @@ pub mod aidl {
              pub use super::r#CdmaT53ClirInfoRecord as _7_android_8_hardware_5_radio_5_voice_21_CdmaT53ClirInfoRecord;
             }
           }
-                    pub mod CfData {
+          pub mod CfData {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #[derive(Debug)]
@@ -844,7 +844,7 @@ pub mod aidl {
              pub use super::r#CfData as _7_android_8_hardware_5_radio_5_voice_6_CfData;
             }
           }
-                    pub mod ClipStatus {
+          pub mod ClipStatus {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #![allow(non_upper_case_globals)]
@@ -860,7 +860,7 @@ pub mod aidl {
              pub use super::r#ClipStatus as _7_android_8_hardware_5_radio_5_voice_10_ClipStatus;
             }
           }
-                    pub mod Dial {
+          pub mod Dial {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #[derive(Debug)]
@@ -915,7 +915,7 @@ pub mod aidl {
              pub use super::r#Dial as _7_android_8_hardware_5_radio_5_voice_4_Dial;
             }
           }
-                    pub mod EmergencyCallRouting {
+          pub mod EmergencyCallRouting {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #![allow(non_upper_case_globals)]
@@ -931,7 +931,7 @@ pub mod aidl {
              pub use super::r#EmergencyCallRouting as _7_android_8_hardware_5_radio_5_voice_20_EmergencyCallRouting;
             }
           }
-                    pub mod EmergencyNumber {
+          pub mod EmergencyNumber {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #[derive(Debug)]
@@ -1005,7 +1005,7 @@ pub mod aidl {
              pub use super::r#EmergencyNumber as _7_android_8_hardware_5_radio_5_voice_15_EmergencyNumber;
             }
           }
-                    pub mod EmergencyServiceCategory {
+          pub mod EmergencyServiceCategory {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #![allow(non_upper_case_globals)]
@@ -1026,7 +1026,7 @@ pub mod aidl {
              pub use super::r#EmergencyServiceCategory as _7_android_8_hardware_5_radio_5_voice_24_EmergencyServiceCategory;
             }
           }
-                    pub mod IRadioVoice {
+          pub mod IRadioVoice {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #![allow(non_upper_case_globals)]
@@ -2958,7 +2958,7 @@ pub mod aidl {
              pub use super::r#IRadioVoice as _7_android_8_hardware_5_radio_5_voice_11_IRadioVoice;
             }
           }
-                    pub mod IRadioVoiceIndication {
+          pub mod IRadioVoiceIndication {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #![allow(non_upper_case_globals)]
@@ -3830,7 +3830,7 @@ pub mod aidl {
              pub use super::r#IRadioVoiceIndication as _7_android_8_hardware_5_radio_5_voice_21_IRadioVoiceIndication;
             }
           }
-                    pub mod IRadioVoiceResponse {
+          pub mod IRadioVoiceResponse {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #![allow(non_upper_case_globals)]
@@ -5689,7 +5689,7 @@ pub mod aidl {
              pub use super::r#IRadioVoiceResponse as _7_android_8_hardware_5_radio_5_voice_19_IRadioVoiceResponse;
             }
           }
-                    pub mod LastCallFailCause {
+          pub mod LastCallFailCause {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #![allow(non_upper_case_globals)]
@@ -5798,7 +5798,7 @@ pub mod aidl {
              pub use super::r#LastCallFailCause as _7_android_8_hardware_5_radio_5_voice_17_LastCallFailCause;
             }
           }
-                    pub mod LastCallFailCauseInfo {
+          pub mod LastCallFailCauseInfo {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #[derive(Debug)]
@@ -5844,7 +5844,7 @@ pub mod aidl {
              pub use super::r#LastCallFailCauseInfo as _7_android_8_hardware_5_radio_5_voice_21_LastCallFailCauseInfo;
             }
           }
-                    pub mod SrvccState {
+          pub mod SrvccState {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #![allow(non_upper_case_globals)]
@@ -5861,7 +5861,7 @@ pub mod aidl {
              pub use super::r#SrvccState as _7_android_8_hardware_5_radio_5_voice_10_SrvccState;
             }
           }
-                    pub mod SsInfoData {
+          pub mod SsInfoData {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #[derive(Debug)]
@@ -5902,7 +5902,7 @@ pub mod aidl {
              pub use super::r#SsInfoData as _7_android_8_hardware_5_radio_5_voice_10_SsInfoData;
             }
           }
-                    pub mod StkCcUnsolSsResult {
+          pub mod StkCcUnsolSsResult {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #[derive(Debug)]
@@ -6018,7 +6018,7 @@ pub mod aidl {
              pub use super::r#StkCcUnsolSsResult as _7_android_8_hardware_5_radio_5_voice_18_StkCcUnsolSsResult;
             }
           }
-                    pub mod TtyMode {
+          pub mod TtyMode {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #![allow(non_upper_case_globals)]
@@ -6035,7 +6035,7 @@ pub mod aidl {
              pub use super::r#TtyMode as _7_android_8_hardware_5_radio_5_voice_7_TtyMode;
             }
           }
-                    pub mod UssdModeType {
+          pub mod UssdModeType {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #![allow(non_upper_case_globals)]
@@ -6054,7 +6054,7 @@ pub mod aidl {
              pub use super::r#UssdModeType as _7_android_8_hardware_5_radio_5_voice_12_UssdModeType;
             }
           }
-                    pub mod UusInfo {
+          pub mod UusInfo {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #[derive(Debug)]
@@ -6118,13 +6118,13 @@ pub mod aidl {
              pub use super::r#UusInfo as _7_android_8_hardware_5_radio_5_voice_7_UusInfo;
             }
           }
-                }
-            }
         }
+      }
     }
+  }
 }
 pub mod mangled {
-    pub use super::aidl::android::hardware::radio::voice::AudioQuality::mangled::*;
+  pub use super::aidl::android::hardware::radio::voice::AudioQuality::mangled::*;
   pub use super::aidl::android::hardware::radio::voice::Call::mangled::*;
   pub use super::aidl::android::hardware::radio::voice::CallForwardInfo::mangled::*;
   pub use super::aidl::android::hardware::radio::voice::CdmaCallWaiting::mangled::*;

@@ -3,11 +3,11 @@
 #![allow(missing_docs)]
 pub use binder;
 pub mod aidl {
-    pub mod android {
-        pub mod hardware {
-            pub mod radio {
-                pub mod data {
-                    pub mod ApnAuthType {
+  pub mod android {
+    pub mod hardware {
+      pub mod radio {
+        pub mod data {
+          pub mod ApnAuthType {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #![allow(non_upper_case_globals)]
@@ -24,7 +24,7 @@ pub mod aidl {
              pub use super::r#ApnAuthType as _7_android_8_hardware_5_radio_4_data_11_ApnAuthType;
             }
           }
-                    pub mod ApnTypes {
+          pub mod ApnTypes {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #![allow(non_upper_case_globals)]
@@ -53,7 +53,7 @@ pub mod aidl {
              pub use super::r#ApnTypes as _7_android_8_hardware_5_radio_4_data_8_ApnTypes;
             }
           }
-                    pub mod DataCallFailCause {
+          pub mod DataCallFailCause {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #![allow(non_upper_case_globals)]
@@ -406,7 +406,7 @@ pub mod aidl {
              pub use super::r#DataCallFailCause as _7_android_8_hardware_5_radio_4_data_17_DataCallFailCause;
             }
           }
-                    pub mod DataProfileInfo {
+          pub mod DataProfileInfo {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #[derive(Debug)]
@@ -570,7 +570,7 @@ pub mod aidl {
              pub use super::r#DataProfileInfo as _7_android_8_hardware_5_radio_4_data_15_DataProfileInfo;
             }
           }
-                    pub mod DataRequestReason {
+          pub mod DataRequestReason {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #![allow(non_upper_case_globals)]
@@ -586,7 +586,7 @@ pub mod aidl {
              pub use super::r#DataRequestReason as _7_android_8_hardware_5_radio_4_data_17_DataRequestReason;
             }
           }
-                    pub mod DataThrottlingAction {
+          pub mod DataThrottlingAction {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #![allow(non_upper_case_globals)]
@@ -603,7 +603,7 @@ pub mod aidl {
              pub use super::r#DataThrottlingAction as _7_android_8_hardware_5_radio_4_data_20_DataThrottlingAction;
             }
           }
-                    pub mod EpsQos {
+          pub mod EpsQos {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #[derive(Debug)]
@@ -655,7 +655,7 @@ pub mod aidl {
              pub use super::r#EpsQos as _7_android_8_hardware_5_radio_4_data_6_EpsQos;
             }
           }
-                    pub mod IRadioData {
+          pub mod IRadioData {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #![allow(non_upper_case_globals)]
@@ -1586,7 +1586,7 @@ pub mod aidl {
              pub use super::r#IRadioData as _7_android_8_hardware_5_radio_4_data_10_IRadioData;
             }
           }
-                    pub mod IRadioDataIndication {
+          pub mod IRadioDataIndication {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #![allow(non_upper_case_globals)]
@@ -2012,7 +2012,7 @@ pub mod aidl {
              pub use super::r#IRadioDataIndication as _7_android_8_hardware_5_radio_4_data_20_IRadioDataIndication;
             }
           }
-                    pub mod IRadioDataResponse {
+          pub mod IRadioDataResponse {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #![allow(non_upper_case_globals)]
@@ -2868,7 +2868,7 @@ pub mod aidl {
              pub use super::r#IRadioDataResponse as _7_android_8_hardware_5_radio_4_data_18_IRadioDataResponse;
             }
           }
-                    pub mod KeepaliveRequest {
+          pub mod KeepaliveRequest {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #[derive(Debug)]
@@ -2946,7 +2946,7 @@ pub mod aidl {
              pub use super::r#KeepaliveRequest as _7_android_8_hardware_5_radio_4_data_16_KeepaliveRequest;
             }
           }
-                    pub mod KeepaliveStatus {
+          pub mod KeepaliveStatus {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #[derive(Debug)]
@@ -2995,7 +2995,7 @@ pub mod aidl {
              pub use super::r#KeepaliveStatus as _7_android_8_hardware_5_radio_4_data_15_KeepaliveStatus;
             }
           }
-                    pub mod LinkAddress {
+          pub mod LinkAddress {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #[derive(Debug)]
@@ -3055,7 +3055,7 @@ pub mod aidl {
              pub use super::r#LinkAddress as _7_android_8_hardware_5_radio_4_data_11_LinkAddress;
             }
           }
-                    pub mod NrQos {
+          pub mod NrQos {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #[derive(Debug)]
@@ -3121,7 +3121,7 @@ pub mod aidl {
              pub use super::r#NrQos as _7_android_8_hardware_5_radio_4_data_5_NrQos;
             }
           }
-                    pub mod OsAppId {
+          pub mod OsAppId {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #[derive(Debug)]
@@ -3161,7 +3161,7 @@ pub mod aidl {
              pub use super::r#OsAppId as _7_android_8_hardware_5_radio_4_data_7_OsAppId;
             }
           }
-                    pub mod PcoDataInfo {
+          pub mod PcoDataInfo {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #[derive(Debug)]
@@ -3219,7 +3219,7 @@ pub mod aidl {
              pub use super::r#PcoDataInfo as _7_android_8_hardware_5_radio_4_data_11_PcoDataInfo;
             }
           }
-                    pub mod PdpProtocolType {
+          pub mod PdpProtocolType {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #![allow(non_upper_case_globals)]
@@ -3239,7 +3239,7 @@ pub mod aidl {
              pub use super::r#PdpProtocolType as _7_android_8_hardware_5_radio_4_data_15_PdpProtocolType;
             }
           }
-                    pub mod PortRange {
+          pub mod PortRange {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #[derive(Debug)]
@@ -3287,7 +3287,7 @@ pub mod aidl {
              pub use super::r#PortRange as _7_android_8_hardware_5_radio_4_data_9_PortRange;
             }
           }
-                    pub mod Qos {
+          pub mod Qos {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #[derive(Debug)]
@@ -3364,7 +3364,7 @@ pub mod aidl {
              pub use super::r#Tag::r#Tag as _7_android_8_hardware_5_radio_4_data_3_Qos_3_Tag;
             }
           }
-                    pub mod QosBandwidth {
+          pub mod QosBandwidth {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #[derive(Debug)]
@@ -3410,7 +3410,7 @@ pub mod aidl {
              pub use super::r#QosBandwidth as _7_android_8_hardware_5_radio_4_data_12_QosBandwidth;
             }
           }
-                    pub mod QosFilter {
+          pub mod QosFilter {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #[derive(Debug)]
@@ -3512,7 +3512,7 @@ pub mod aidl {
              pub use super::r#QosFilter as _7_android_8_hardware_5_radio_4_data_9_QosFilter;
             }
           }
-                    pub mod QosFilterIpsecSpi {
+          pub mod QosFilterIpsecSpi {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #[derive(Debug)]
@@ -3578,7 +3578,7 @@ pub mod aidl {
              pub use super::r#Tag::r#Tag as _7_android_8_hardware_5_radio_4_data_17_QosFilterIpsecSpi_3_Tag;
             }
           }
-                    pub mod QosFilterIpv6FlowLabel {
+          pub mod QosFilterIpv6FlowLabel {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #[derive(Debug)]
@@ -3644,7 +3644,7 @@ pub mod aidl {
              pub use super::r#Tag::r#Tag as _7_android_8_hardware_5_radio_4_data_22_QosFilterIpv6FlowLabel_3_Tag;
             }
           }
-                    pub mod QosFilterTypeOfService {
+          pub mod QosFilterTypeOfService {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #[derive(Debug)]
@@ -3710,7 +3710,7 @@ pub mod aidl {
              pub use super::r#Tag::r#Tag as _7_android_8_hardware_5_radio_4_data_22_QosFilterTypeOfService_3_Tag;
             }
           }
-                    pub mod QosSession {
+          pub mod QosSession {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #[derive(Debug)]
@@ -3762,7 +3762,7 @@ pub mod aidl {
              pub use super::r#QosSession as _7_android_8_hardware_5_radio_4_data_10_QosSession;
             }
           }
-                    pub mod RouteSelectionDescriptor {
+          pub mod RouteSelectionDescriptor {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #[derive(Debug)]
@@ -3830,7 +3830,7 @@ pub mod aidl {
              pub use super::r#RouteSelectionDescriptor as _7_android_8_hardware_5_radio_4_data_24_RouteSelectionDescriptor;
             }
           }
-                    pub mod SetupDataCallResult {
+          pub mod SetupDataCallResult {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #[derive(Debug)]
@@ -3979,7 +3979,7 @@ pub mod aidl {
              pub use super::r#SetupDataCallResult as _7_android_8_hardware_5_radio_4_data_19_SetupDataCallResult;
             }
           }
-                    pub mod SliceInfo {
+          pub mod SliceInfo {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #[derive(Debug)]
@@ -4053,7 +4053,7 @@ pub mod aidl {
              pub use super::r#SliceInfo as _7_android_8_hardware_5_radio_4_data_9_SliceInfo;
             }
           }
-                    pub mod SlicingConfig {
+          pub mod SlicingConfig {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #[derive(Debug)]
@@ -4099,7 +4099,7 @@ pub mod aidl {
              pub use super::r#SlicingConfig as _7_android_8_hardware_5_radio_4_data_13_SlicingConfig;
             }
           }
-                    pub mod TrafficDescriptor {
+          pub mod TrafficDescriptor {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #[derive(Debug)]
@@ -4145,7 +4145,7 @@ pub mod aidl {
              pub use super::r#TrafficDescriptor as _7_android_8_hardware_5_radio_4_data_17_TrafficDescriptor;
             }
           }
-                    pub mod UrspRule {
+          pub mod UrspRule {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #[derive(Debug)]
@@ -4197,42 +4197,42 @@ pub mod aidl {
              pub use super::r#UrspRule as _7_android_8_hardware_5_radio_4_data_8_UrspRule;
             }
           }
-                }
-            }
         }
+      }
     }
+  }
 }
 pub mod mangled {
-    pub use super::aidl::android::hardware::radio::data::ApnAuthType::mangled::*;
-    pub use super::aidl::android::hardware::radio::data::ApnTypes::mangled::*;
-    pub use super::aidl::android::hardware::radio::data::DataCallFailCause::mangled::*;
-    pub use super::aidl::android::hardware::radio::data::DataProfileInfo::mangled::*;
-    pub use super::aidl::android::hardware::radio::data::DataRequestReason::mangled::*;
-    pub use super::aidl::android::hardware::radio::data::DataThrottlingAction::mangled::*;
-    pub use super::aidl::android::hardware::radio::data::EpsQos::mangled::*;
-    pub use super::aidl::android::hardware::radio::data::IRadioData::mangled::*;
-    pub use super::aidl::android::hardware::radio::data::IRadioDataIndication::mangled::*;
-    pub use super::aidl::android::hardware::radio::data::IRadioDataResponse::mangled::*;
-    pub use super::aidl::android::hardware::radio::data::KeepaliveRequest::mangled::*;
-    pub use super::aidl::android::hardware::radio::data::KeepaliveStatus::mangled::*;
-    pub use super::aidl::android::hardware::radio::data::LinkAddress::mangled::*;
-    pub use super::aidl::android::hardware::radio::data::NrQos::mangled::*;
-    pub use super::aidl::android::hardware::radio::data::OsAppId::mangled::*;
-    pub use super::aidl::android::hardware::radio::data::PcoDataInfo::mangled::*;
-    pub use super::aidl::android::hardware::radio::data::PdpProtocolType::mangled::*;
-    pub use super::aidl::android::hardware::radio::data::PortRange::mangled::*;
-    pub use super::aidl::android::hardware::radio::data::Qos::mangled::*;
-    pub use super::aidl::android::hardware::radio::data::QosBandwidth::mangled::*;
-    pub use super::aidl::android::hardware::radio::data::QosFilter::mangled::*;
-    pub use super::aidl::android::hardware::radio::data::QosFilterIpsecSpi::mangled::*;
-    pub use super::aidl::android::hardware::radio::data::QosFilterIpv6FlowLabel::mangled::*;
-    pub use super::aidl::android::hardware::radio::data::QosFilterTypeOfService::mangled::*;
-    pub use super::aidl::android::hardware::radio::data::QosSession::mangled::*;
-    pub use super::aidl::android::hardware::radio::data::RouteSelectionDescriptor::mangled::*;
-    pub use super::aidl::android::hardware::radio::data::SetupDataCallResult::mangled::*;
-    pub use super::aidl::android::hardware::radio::data::SliceInfo::mangled::*;
-    pub use super::aidl::android::hardware::radio::data::SlicingConfig::mangled::*;
-    pub use super::aidl::android::hardware::radio::data::TrafficDescriptor::mangled::*;
-    pub use super::aidl::android::hardware::radio::data::UrspRule::mangled::*;
-    pub(crate) use android_hardware_radio::mangled::*;
+  pub use super::aidl::android::hardware::radio::data::ApnAuthType::mangled::*;
+  pub use super::aidl::android::hardware::radio::data::ApnTypes::mangled::*;
+  pub use super::aidl::android::hardware::radio::data::DataCallFailCause::mangled::*;
+  pub use super::aidl::android::hardware::radio::data::DataProfileInfo::mangled::*;
+  pub use super::aidl::android::hardware::radio::data::DataRequestReason::mangled::*;
+  pub use super::aidl::android::hardware::radio::data::DataThrottlingAction::mangled::*;
+  pub use super::aidl::android::hardware::radio::data::EpsQos::mangled::*;
+  pub use super::aidl::android::hardware::radio::data::IRadioData::mangled::*;
+  pub use super::aidl::android::hardware::radio::data::IRadioDataIndication::mangled::*;
+  pub use super::aidl::android::hardware::radio::data::IRadioDataResponse::mangled::*;
+  pub use super::aidl::android::hardware::radio::data::KeepaliveRequest::mangled::*;
+  pub use super::aidl::android::hardware::radio::data::KeepaliveStatus::mangled::*;
+  pub use super::aidl::android::hardware::radio::data::LinkAddress::mangled::*;
+  pub use super::aidl::android::hardware::radio::data::NrQos::mangled::*;
+  pub use super::aidl::android::hardware::radio::data::OsAppId::mangled::*;
+  pub use super::aidl::android::hardware::radio::data::PcoDataInfo::mangled::*;
+  pub use super::aidl::android::hardware::radio::data::PdpProtocolType::mangled::*;
+  pub use super::aidl::android::hardware::radio::data::PortRange::mangled::*;
+  pub use super::aidl::android::hardware::radio::data::Qos::mangled::*;
+  pub use super::aidl::android::hardware::radio::data::QosBandwidth::mangled::*;
+  pub use super::aidl::android::hardware::radio::data::QosFilter::mangled::*;
+  pub use super::aidl::android::hardware::radio::data::QosFilterIpsecSpi::mangled::*;
+  pub use super::aidl::android::hardware::radio::data::QosFilterIpv6FlowLabel::mangled::*;
+  pub use super::aidl::android::hardware::radio::data::QosFilterTypeOfService::mangled::*;
+  pub use super::aidl::android::hardware::radio::data::QosSession::mangled::*;
+  pub use super::aidl::android::hardware::radio::data::RouteSelectionDescriptor::mangled::*;
+  pub use super::aidl::android::hardware::radio::data::SetupDataCallResult::mangled::*;
+  pub use super::aidl::android::hardware::radio::data::SliceInfo::mangled::*;
+  pub use super::aidl::android::hardware::radio::data::SlicingConfig::mangled::*;
+  pub use super::aidl::android::hardware::radio::data::TrafficDescriptor::mangled::*;
+  pub use super::aidl::android::hardware::radio::data::UrspRule::mangled::*;
+  pub(crate) use android_hardware_radio::mangled::*;
 }

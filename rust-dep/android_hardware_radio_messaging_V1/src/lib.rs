@@ -3,11 +3,11 @@
 #![allow(missing_docs)]
 pub use binder;
 pub mod aidl {
-    pub mod android {
-        pub mod hardware {
-            pub mod radio {
-                pub mod messaging {
-                    pub mod CdmaBroadcastSmsConfigInfo {
+  pub mod android {
+    pub mod hardware {
+      pub mod radio {
+        pub mod messaging {
+          pub mod CdmaBroadcastSmsConfigInfo {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #[derive(Debug)]
@@ -59,7 +59,7 @@ pub mod aidl {
              pub use super::r#CdmaBroadcastSmsConfigInfo as _7_android_8_hardware_5_radio_9_messaging_26_CdmaBroadcastSmsConfigInfo;
             }
           }
-                    pub mod CdmaSmsAck {
+          pub mod CdmaSmsAck {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #[derive(Debug)]
@@ -105,7 +105,7 @@ pub mod aidl {
              pub use super::r#CdmaSmsAck as _7_android_8_hardware_5_radio_9_messaging_10_CdmaSmsAck;
             }
           }
-                    pub mod CdmaSmsAddress {
+          pub mod CdmaSmsAddress {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #[derive(Debug)]
@@ -195,7 +195,7 @@ pub mod aidl {
              pub use super::r#CdmaSmsAddress as _7_android_8_hardware_5_radio_9_messaging_14_CdmaSmsAddress;
             }
           }
-                    pub mod CdmaSmsMessage {
+          pub mod CdmaSmsMessage {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #[derive(Debug)]
@@ -265,7 +265,7 @@ pub mod aidl {
              pub use super::r#CdmaSmsMessage as _7_android_8_hardware_5_radio_9_messaging_14_CdmaSmsMessage;
             }
           }
-                    pub mod CdmaSmsSubaddress {
+          pub mod CdmaSmsSubaddress {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #[derive(Debug)]
@@ -319,7 +319,7 @@ pub mod aidl {
              pub use super::r#CdmaSmsSubaddress as _7_android_8_hardware_5_radio_9_messaging_17_CdmaSmsSubaddress;
             }
           }
-                    pub mod CdmaSmsWriteArgs {
+          pub mod CdmaSmsWriteArgs {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #[derive(Debug)]
@@ -369,7 +369,7 @@ pub mod aidl {
              pub use super::r#CdmaSmsWriteArgs as _7_android_8_hardware_5_radio_9_messaging_16_CdmaSmsWriteArgs;
             }
           }
-                    pub mod GsmBroadcastSmsConfigInfo {
+          pub mod GsmBroadcastSmsConfigInfo {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #[derive(Debug)]
@@ -433,7 +433,7 @@ pub mod aidl {
              pub use super::r#GsmBroadcastSmsConfigInfo as _7_android_8_hardware_5_radio_9_messaging_25_GsmBroadcastSmsConfigInfo;
             }
           }
-                    pub mod GsmSmsMessage {
+          pub mod GsmSmsMessage {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #[derive(Debug)]
@@ -479,7 +479,7 @@ pub mod aidl {
              pub use super::r#GsmSmsMessage as _7_android_8_hardware_5_radio_9_messaging_13_GsmSmsMessage;
             }
           }
-                    pub mod IRadioMessaging {
+          pub mod IRadioMessaging {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #![allow(non_upper_case_globals)]
@@ -1709,7 +1709,7 @@ pub mod aidl {
              pub use super::r#IRadioMessaging as _7_android_8_hardware_5_radio_9_messaging_15_IRadioMessaging;
             }
           }
-                    pub mod IRadioMessagingIndication {
+          pub mod IRadioMessagingIndication {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #![allow(non_upper_case_globals)]
@@ -2221,7 +2221,7 @@ pub mod aidl {
              pub use super::r#IRadioMessagingIndication as _7_android_8_hardware_5_radio_9_messaging_25_IRadioMessagingIndication;
             }
           }
-                    pub mod IRadioMessagingResponse {
+          pub mod IRadioMessagingResponse {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #![allow(non_upper_case_globals)]
@@ -3388,7 +3388,7 @@ pub mod aidl {
              pub use super::r#IRadioMessagingResponse as _7_android_8_hardware_5_radio_9_messaging_23_IRadioMessagingResponse;
             }
           }
-                    pub mod ImsSmsMessage {
+          pub mod ImsSmsMessage {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #[derive(Debug)]
@@ -3452,7 +3452,7 @@ pub mod aidl {
              pub use super::r#ImsSmsMessage as _7_android_8_hardware_5_radio_9_messaging_13_ImsSmsMessage;
             }
           }
-                    pub mod SendSmsResult {
+          pub mod SendSmsResult {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #[derive(Debug)]
@@ -3504,7 +3504,7 @@ pub mod aidl {
              pub use super::r#SendSmsResult as _7_android_8_hardware_5_radio_9_messaging_13_SendSmsResult;
             }
           }
-                    pub mod SmsAcknowledgeFailCause {
+          pub mod SmsAcknowledgeFailCause {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #![allow(non_upper_case_globals)]
@@ -3519,7 +3519,7 @@ pub mod aidl {
              pub use super::r#SmsAcknowledgeFailCause as _7_android_8_hardware_5_radio_9_messaging_23_SmsAcknowledgeFailCause;
             }
           }
-                    pub mod SmsWriteArgs {
+          pub mod SmsWriteArgs {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #[derive(Debug)]
@@ -3575,26 +3575,26 @@ pub mod aidl {
              pub use super::r#SmsWriteArgs as _7_android_8_hardware_5_radio_9_messaging_12_SmsWriteArgs;
             }
           }
-                }
-            }
         }
+      }
     }
+  }
 }
 pub mod mangled {
-    pub use super::aidl::android::hardware::radio::messaging::CdmaBroadcastSmsConfigInfo::mangled::*;
-    pub use super::aidl::android::hardware::radio::messaging::CdmaSmsAck::mangled::*;
-    pub use super::aidl::android::hardware::radio::messaging::CdmaSmsAddress::mangled::*;
-    pub use super::aidl::android::hardware::radio::messaging::CdmaSmsMessage::mangled::*;
-    pub use super::aidl::android::hardware::radio::messaging::CdmaSmsSubaddress::mangled::*;
-    pub use super::aidl::android::hardware::radio::messaging::CdmaSmsWriteArgs::mangled::*;
-    pub use super::aidl::android::hardware::radio::messaging::GsmBroadcastSmsConfigInfo::mangled::*;
-    pub use super::aidl::android::hardware::radio::messaging::GsmSmsMessage::mangled::*;
-    pub use super::aidl::android::hardware::radio::messaging::IRadioMessaging::mangled::*;
-    pub use super::aidl::android::hardware::radio::messaging::IRadioMessagingIndication::mangled::*;
-    pub use super::aidl::android::hardware::radio::messaging::IRadioMessagingResponse::mangled::*;
-    pub use super::aidl::android::hardware::radio::messaging::ImsSmsMessage::mangled::*;
-    pub use super::aidl::android::hardware::radio::messaging::SendSmsResult::mangled::*;
-    pub use super::aidl::android::hardware::radio::messaging::SmsAcknowledgeFailCause::mangled::*;
-    pub use super::aidl::android::hardware::radio::messaging::SmsWriteArgs::mangled::*;
-    pub(crate) use android_hardware_radio::mangled::*;
+  pub use super::aidl::android::hardware::radio::messaging::CdmaBroadcastSmsConfigInfo::mangled::*;
+  pub use super::aidl::android::hardware::radio::messaging::CdmaSmsAck::mangled::*;
+  pub use super::aidl::android::hardware::radio::messaging::CdmaSmsAddress::mangled::*;
+  pub use super::aidl::android::hardware::radio::messaging::CdmaSmsMessage::mangled::*;
+  pub use super::aidl::android::hardware::radio::messaging::CdmaSmsSubaddress::mangled::*;
+  pub use super::aidl::android::hardware::radio::messaging::CdmaSmsWriteArgs::mangled::*;
+  pub use super::aidl::android::hardware::radio::messaging::GsmBroadcastSmsConfigInfo::mangled::*;
+  pub use super::aidl::android::hardware::radio::messaging::GsmSmsMessage::mangled::*;
+  pub use super::aidl::android::hardware::radio::messaging::IRadioMessaging::mangled::*;
+  pub use super::aidl::android::hardware::radio::messaging::IRadioMessagingIndication::mangled::*;
+  pub use super::aidl::android::hardware::radio::messaging::IRadioMessagingResponse::mangled::*;
+  pub use super::aidl::android::hardware::radio::messaging::ImsSmsMessage::mangled::*;
+  pub use super::aidl::android::hardware::radio::messaging::SendSmsResult::mangled::*;
+  pub use super::aidl::android::hardware::radio::messaging::SmsAcknowledgeFailCause::mangled::*;
+  pub use super::aidl::android::hardware::radio::messaging::SmsWriteArgs::mangled::*;
+  pub(crate) use android_hardware_radio::mangled::*;
 }
