@@ -3,11 +3,11 @@
 #![allow(missing_docs)]
 pub use binder;
 pub mod aidl {
-    pub mod android {
-        pub mod hardware {
-            pub mod radio {
-                pub mod sim {
-                    pub mod AppStatus {
+  pub mod android {
+    pub mod hardware {
+      pub mod radio {
+        pub mod sim {
+          pub mod AppStatus {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #[derive(Debug)]
@@ -101,7 +101,7 @@ pub mod aidl {
              pub use super::r#AppStatus as _7_android_8_hardware_5_radio_3_sim_9_AppStatus;
             }
           }
-                    pub mod CardPowerState {
+          pub mod CardPowerState {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #![allow(non_upper_case_globals)]
@@ -117,7 +117,7 @@ pub mod aidl {
              pub use super::r#CardPowerState as _7_android_8_hardware_5_radio_3_sim_14_CardPowerState;
             }
           }
-                    pub mod CardStatus {
+          pub mod CardStatus {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #[derive(Debug)]
@@ -215,7 +215,7 @@ pub mod aidl {
              pub use super::r#CardStatus as _7_android_8_hardware_5_radio_3_sim_10_CardStatus;
             }
           }
-                    pub mod Carrier {
+          pub mod Carrier {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #[derive(Debug)]
@@ -278,7 +278,7 @@ pub mod aidl {
              pub use super::r#Carrier as _7_android_8_hardware_5_radio_3_sim_7_Carrier;
             }
           }
-                    pub mod CarrierRestrictions {
+          pub mod CarrierRestrictions {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #[derive(Debug)]
@@ -330,7 +330,7 @@ pub mod aidl {
              pub use super::r#CarrierRestrictions as _7_android_8_hardware_5_radio_3_sim_19_CarrierRestrictions;
             }
           }
-                    pub mod CdmaSubscriptionSource {
+          pub mod CdmaSubscriptionSource {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #![allow(non_upper_case_globals)]
@@ -345,7 +345,7 @@ pub mod aidl {
              pub use super::r#CdmaSubscriptionSource as _7_android_8_hardware_5_radio_3_sim_22_CdmaSubscriptionSource;
             }
           }
-                    pub mod IRadioSim {
+          pub mod IRadioSim {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #![allow(non_upper_case_globals)]
@@ -2190,7 +2190,7 @@ pub mod aidl {
              pub use super::r#IRadioSim as _7_android_8_hardware_5_radio_3_sim_9_IRadioSim;
             }
           }
-                    pub mod IRadioSimIndication {
+          pub mod IRadioSimIndication {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #![allow(non_upper_case_globals)]
@@ -2880,7 +2880,7 @@ pub mod aidl {
              pub use super::r#IRadioSimIndication as _7_android_8_hardware_5_radio_3_sim_19_IRadioSimIndication;
             }
           }
-                    pub mod IRadioSimResponse {
+          pub mod IRadioSimResponse {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #![allow(non_upper_case_globals)]
@@ -4648,7 +4648,7 @@ pub mod aidl {
              pub use super::r#IRadioSimResponse as _7_android_8_hardware_5_radio_3_sim_17_IRadioSimResponse;
             }
           }
-                    pub mod IccIo {
+          pub mod IccIo {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #[derive(Debug)]
@@ -4736,7 +4736,7 @@ pub mod aidl {
              pub use super::r#IccIo as _7_android_8_hardware_5_radio_3_sim_5_IccIo;
             }
           }
-                    pub mod IccIoResult {
+          pub mod IccIoResult {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #[derive(Debug)]
@@ -4788,7 +4788,7 @@ pub mod aidl {
              pub use super::r#IccIoResult as _7_android_8_hardware_5_radio_3_sim_11_IccIoResult;
             }
           }
-                    pub mod ImsiEncryptionInfo {
+          pub mod ImsiEncryptionInfo {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #[derive(Debug)]
@@ -4860,7 +4860,7 @@ pub mod aidl {
              pub use super::r#ImsiEncryptionInfo as _7_android_8_hardware_5_radio_3_sim_18_ImsiEncryptionInfo;
             }
           }
-                    pub mod PbReceivedStatus {
+          pub mod PbReceivedStatus {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #![allow(non_upper_case_globals)]
@@ -4877,7 +4877,7 @@ pub mod aidl {
              pub use super::r#PbReceivedStatus as _7_android_8_hardware_5_radio_3_sim_16_PbReceivedStatus;
             }
           }
-                    pub mod PersoSubstate {
+          pub mod PersoSubstate {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #![allow(non_upper_case_globals)]
@@ -4925,7 +4925,7 @@ pub mod aidl {
              pub use super::r#PersoSubstate as _7_android_8_hardware_5_radio_3_sim_13_PersoSubstate;
             }
           }
-                    pub mod PhonebookCapacity {
+          pub mod PhonebookCapacity {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #[derive(Debug)]
@@ -5019,7 +5019,7 @@ pub mod aidl {
              pub use super::r#PhonebookCapacity as _7_android_8_hardware_5_radio_3_sim_17_PhonebookCapacity;
             }
           }
-                    pub mod PhonebookRecordInfo {
+          pub mod PhonebookRecordInfo {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #[derive(Debug)]
@@ -5083,7 +5083,7 @@ pub mod aidl {
              pub use super::r#PhonebookRecordInfo as _7_android_8_hardware_5_radio_3_sim_19_PhonebookRecordInfo;
             }
           }
-                    pub mod PinState {
+          pub mod PinState {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #![allow(non_upper_case_globals)]
@@ -5102,7 +5102,7 @@ pub mod aidl {
              pub use super::r#PinState as _7_android_8_hardware_5_radio_3_sim_8_PinState;
             }
           }
-                    pub mod SelectUiccSub {
+          pub mod SelectUiccSub {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #[derive(Debug)]
@@ -5165,7 +5165,7 @@ pub mod aidl {
              pub use super::r#SelectUiccSub as _7_android_8_hardware_5_radio_3_sim_13_SelectUiccSub;
             }
           }
-                    pub mod SimApdu {
+          pub mod SimApdu {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #[derive(Debug)]
@@ -5241,7 +5241,7 @@ pub mod aidl {
              pub use super::r#SimApdu as _7_android_8_hardware_5_radio_3_sim_7_SimApdu;
             }
           }
-                    pub mod SimLockMultiSimPolicy {
+          pub mod SimLockMultiSimPolicy {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #![allow(non_upper_case_globals)]
@@ -5256,7 +5256,7 @@ pub mod aidl {
              pub use super::r#SimLockMultiSimPolicy as _7_android_8_hardware_5_radio_3_sim_21_SimLockMultiSimPolicy;
             }
           }
-                    pub mod SimRefreshResult {
+          pub mod SimRefreshResult {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #[derive(Debug)]
@@ -5311,33 +5311,33 @@ pub mod aidl {
              pub use super::r#SimRefreshResult as _7_android_8_hardware_5_radio_3_sim_16_SimRefreshResult;
             }
           }
-                }
-            }
         }
+      }
     }
+  }
 }
 pub mod mangled {
-    pub use super::aidl::android::hardware::radio::sim::AppStatus::mangled::*;
-    pub use super::aidl::android::hardware::radio::sim::CardPowerState::mangled::*;
-    pub use super::aidl::android::hardware::radio::sim::CardStatus::mangled::*;
-    pub use super::aidl::android::hardware::radio::sim::Carrier::mangled::*;
-    pub use super::aidl::android::hardware::radio::sim::CarrierRestrictions::mangled::*;
-    pub use super::aidl::android::hardware::radio::sim::CdmaSubscriptionSource::mangled::*;
-    pub use super::aidl::android::hardware::radio::sim::IRadioSim::mangled::*;
-    pub use super::aidl::android::hardware::radio::sim::IRadioSimIndication::mangled::*;
-    pub use super::aidl::android::hardware::radio::sim::IRadioSimResponse::mangled::*;
-    pub use super::aidl::android::hardware::radio::sim::IccIo::mangled::*;
-    pub use super::aidl::android::hardware::radio::sim::IccIoResult::mangled::*;
-    pub use super::aidl::android::hardware::radio::sim::ImsiEncryptionInfo::mangled::*;
-    pub use super::aidl::android::hardware::radio::sim::PbReceivedStatus::mangled::*;
-    pub use super::aidl::android::hardware::radio::sim::PersoSubstate::mangled::*;
-    pub use super::aidl::android::hardware::radio::sim::PhonebookCapacity::mangled::*;
-    pub use super::aidl::android::hardware::radio::sim::PhonebookRecordInfo::mangled::*;
-    pub use super::aidl::android::hardware::radio::sim::PinState::mangled::*;
-    pub use super::aidl::android::hardware::radio::sim::SelectUiccSub::mangled::*;
-    pub use super::aidl::android::hardware::radio::sim::SimApdu::mangled::*;
-    pub use super::aidl::android::hardware::radio::sim::SimLockMultiSimPolicy::mangled::*;
-    pub use super::aidl::android::hardware::radio::sim::SimRefreshResult::mangled::*;
-    pub(crate) use android_hardware_radio::mangled::*;
-    pub(crate) use android_hardware_radio_config::mangled::*;
+  pub use super::aidl::android::hardware::radio::sim::AppStatus::mangled::*;
+  pub use super::aidl::android::hardware::radio::sim::CardPowerState::mangled::*;
+  pub use super::aidl::android::hardware::radio::sim::CardStatus::mangled::*;
+  pub use super::aidl::android::hardware::radio::sim::Carrier::mangled::*;
+  pub use super::aidl::android::hardware::radio::sim::CarrierRestrictions::mangled::*;
+  pub use super::aidl::android::hardware::radio::sim::CdmaSubscriptionSource::mangled::*;
+  pub use super::aidl::android::hardware::radio::sim::IRadioSim::mangled::*;
+  pub use super::aidl::android::hardware::radio::sim::IRadioSimIndication::mangled::*;
+  pub use super::aidl::android::hardware::radio::sim::IRadioSimResponse::mangled::*;
+  pub use super::aidl::android::hardware::radio::sim::IccIo::mangled::*;
+  pub use super::aidl::android::hardware::radio::sim::IccIoResult::mangled::*;
+  pub use super::aidl::android::hardware::radio::sim::ImsiEncryptionInfo::mangled::*;
+  pub use super::aidl::android::hardware::radio::sim::PbReceivedStatus::mangled::*;
+  pub use super::aidl::android::hardware::radio::sim::PersoSubstate::mangled::*;
+  pub use super::aidl::android::hardware::radio::sim::PhonebookCapacity::mangled::*;
+  pub use super::aidl::android::hardware::radio::sim::PhonebookRecordInfo::mangled::*;
+  pub use super::aidl::android::hardware::radio::sim::PinState::mangled::*;
+  pub use super::aidl::android::hardware::radio::sim::SelectUiccSub::mangled::*;
+  pub use super::aidl::android::hardware::radio::sim::SimApdu::mangled::*;
+  pub use super::aidl::android::hardware::radio::sim::SimLockMultiSimPolicy::mangled::*;
+  pub use super::aidl::android::hardware::radio::sim::SimRefreshResult::mangled::*;
+  pub(crate) use android_hardware_radio::mangled::*;
+  pub(crate) use android_hardware_radio_config::mangled::*;
 }

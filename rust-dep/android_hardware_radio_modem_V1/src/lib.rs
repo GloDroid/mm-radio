@@ -3,11 +3,11 @@
 #![allow(missing_docs)]
 pub use binder;
 pub mod aidl {
-    pub mod android {
-        pub mod hardware {
-            pub mod radio {
-                pub mod modem {
-                    pub mod ActivityStatsInfo {
+  pub mod android {
+    pub mod hardware {
+      pub mod radio {
+        pub mod modem {
+          pub mod ActivityStatsInfo {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #[derive(Debug)]
@@ -59,7 +59,7 @@ pub mod aidl {
              pub use super::r#ActivityStatsInfo as _7_android_8_hardware_5_radio_5_modem_17_ActivityStatsInfo;
             }
           }
-                    pub mod ActivityStatsTechSpecificInfo {
+          pub mod ActivityStatsTechSpecificInfo {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #[derive(Debug)]
@@ -122,7 +122,7 @@ pub mod aidl {
              pub use super::r#ActivityStatsTechSpecificInfo as _7_android_8_hardware_5_radio_5_modem_29_ActivityStatsTechSpecificInfo;
             }
           }
-                    pub mod DeviceStateType {
+          pub mod DeviceStateType {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #![allow(non_upper_case_globals)]
@@ -138,7 +138,7 @@ pub mod aidl {
              pub use super::r#DeviceStateType as _7_android_8_hardware_5_radio_5_modem_15_DeviceStateType;
             }
           }
-                    pub mod HardwareConfig {
+          pub mod HardwareConfig {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #[derive(Debug)]
@@ -207,7 +207,7 @@ pub mod aidl {
              pub use super::r#HardwareConfig as _7_android_8_hardware_5_radio_5_modem_14_HardwareConfig;
             }
           }
-                    pub mod HardwareConfigModem {
+          pub mod HardwareConfigModem {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #[derive(Debug)]
@@ -271,7 +271,7 @@ pub mod aidl {
              pub use super::r#HardwareConfigModem as _7_android_8_hardware_5_radio_5_modem_19_HardwareConfigModem;
             }
           }
-                    pub mod HardwareConfigSim {
+          pub mod HardwareConfigSim {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #[derive(Debug)]
@@ -311,7 +311,7 @@ pub mod aidl {
              pub use super::r#HardwareConfigSim as _7_android_8_hardware_5_radio_5_modem_17_HardwareConfigSim;
             }
           }
-                    pub mod IRadioModem {
+          pub mod IRadioModem {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #![allow(non_upper_case_globals)]
@@ -1265,7 +1265,7 @@ pub mod aidl {
              pub use super::r#IRadioModem as _7_android_8_hardware_5_radio_5_modem_11_IRadioModem;
             }
           }
-                    pub mod IRadioModemIndication {
+          pub mod IRadioModemIndication {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #![allow(non_upper_case_globals)]
@@ -1689,7 +1689,7 @@ pub mod aidl {
              pub use super::r#IRadioModemIndication as _7_android_8_hardware_5_radio_5_modem_21_IRadioModemIndication;
             }
           }
-                    pub mod IRadioModemResponse {
+          pub mod IRadioModemResponse {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #![allow(non_upper_case_globals)]
@@ -2600,7 +2600,7 @@ pub mod aidl {
              pub use super::r#IRadioModemResponse as _7_android_8_hardware_5_radio_5_modem_19_IRadioModemResponse;
             }
           }
-                    pub mod NvItem {
+          pub mod NvItem {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #![allow(non_upper_case_globals)]
@@ -2654,7 +2654,7 @@ pub mod aidl {
              pub use super::r#NvItem as _7_android_8_hardware_5_radio_5_modem_6_NvItem;
             }
           }
-                    pub mod NvWriteItem {
+          pub mod NvWriteItem {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #[derive(Debug)]
@@ -2700,7 +2700,7 @@ pub mod aidl {
              pub use super::r#NvWriteItem as _7_android_8_hardware_5_radio_5_modem_11_NvWriteItem;
             }
           }
-                    pub mod RadioCapability {
+          pub mod RadioCapability {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #[derive(Debug, Clone)]
@@ -2772,7 +2772,7 @@ pub mod aidl {
              pub use super::r#RadioCapability as _7_android_8_hardware_5_radio_5_modem_15_RadioCapability;
             }
           }
-                    pub mod RadioState {
+          pub mod RadioState {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #![allow(non_upper_case_globals)]
@@ -2788,7 +2788,7 @@ pub mod aidl {
              pub use super::r#RadioState as _7_android_8_hardware_5_radio_5_modem_10_RadioState;
             }
           }
-                    pub mod ResetNvType {
+          pub mod ResetNvType {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #![allow(non_upper_case_globals)]
@@ -2804,25 +2804,25 @@ pub mod aidl {
              pub use super::r#ResetNvType as _7_android_8_hardware_5_radio_5_modem_11_ResetNvType;
             }
           }
-                }
-            }
         }
+      }
     }
+  }
 }
 pub mod mangled {
-    pub use super::aidl::android::hardware::radio::modem::ActivityStatsInfo::mangled::*;
-    pub use super::aidl::android::hardware::radio::modem::ActivityStatsTechSpecificInfo::mangled::*;
-    pub use super::aidl::android::hardware::radio::modem::DeviceStateType::mangled::*;
-    pub use super::aidl::android::hardware::radio::modem::HardwareConfig::mangled::*;
-    pub use super::aidl::android::hardware::radio::modem::HardwareConfigModem::mangled::*;
-    pub use super::aidl::android::hardware::radio::modem::HardwareConfigSim::mangled::*;
-    pub use super::aidl::android::hardware::radio::modem::IRadioModem::mangled::*;
-    pub use super::aidl::android::hardware::radio::modem::IRadioModemIndication::mangled::*;
-    pub use super::aidl::android::hardware::radio::modem::IRadioModemResponse::mangled::*;
-    pub use super::aidl::android::hardware::radio::modem::NvItem::mangled::*;
-    pub use super::aidl::android::hardware::radio::modem::NvWriteItem::mangled::*;
-    pub use super::aidl::android::hardware::radio::modem::RadioCapability::mangled::*;
-    pub use super::aidl::android::hardware::radio::modem::RadioState::mangled::*;
-    pub use super::aidl::android::hardware::radio::modem::ResetNvType::mangled::*;
-    pub(crate) use android_hardware_radio::mangled::*;
+  pub use super::aidl::android::hardware::radio::modem::ActivityStatsInfo::mangled::*;
+  pub use super::aidl::android::hardware::radio::modem::ActivityStatsTechSpecificInfo::mangled::*;
+  pub use super::aidl::android::hardware::radio::modem::DeviceStateType::mangled::*;
+  pub use super::aidl::android::hardware::radio::modem::HardwareConfig::mangled::*;
+  pub use super::aidl::android::hardware::radio::modem::HardwareConfigModem::mangled::*;
+  pub use super::aidl::android::hardware::radio::modem::HardwareConfigSim::mangled::*;
+  pub use super::aidl::android::hardware::radio::modem::IRadioModem::mangled::*;
+  pub use super::aidl::android::hardware::radio::modem::IRadioModemIndication::mangled::*;
+  pub use super::aidl::android::hardware::radio::modem::IRadioModemResponse::mangled::*;
+  pub use super::aidl::android::hardware::radio::modem::NvItem::mangled::*;
+  pub use super::aidl::android::hardware::radio::modem::NvWriteItem::mangled::*;
+  pub use super::aidl::android::hardware::radio::modem::RadioCapability::mangled::*;
+  pub use super::aidl::android::hardware::radio::modem::RadioState::mangled::*;
+  pub use super::aidl::android::hardware::radio::modem::ResetNvType::mangled::*;
+  pub(crate) use android_hardware_radio::mangled::*;
 }

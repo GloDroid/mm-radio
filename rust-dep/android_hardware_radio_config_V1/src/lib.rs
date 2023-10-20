@@ -3,11 +3,11 @@
 #![allow(missing_docs)]
 pub use binder;
 pub mod aidl {
-    pub mod android {
-        pub mod hardware {
-            pub mod radio {
-                pub mod config {
-                    pub mod IRadioConfig {
+  pub mod android {
+    pub mod hardware {
+      pub mod radio {
+        pub mod config {
+          pub mod IRadioConfig {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #![allow(non_upper_case_globals)]
@@ -153,7 +153,7 @@ pub mod aidl {
               }
             }
             pub mod transactions {
-              pub const r#getHalDeviceCapabilities: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION;
+              pub const r#getHalDeviceCapabilities: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 0;
               pub const r#getNumOfLiveModems: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 1;
               pub const r#getPhoneCapability: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 2;
               pub const r#getSimSlotsStatus: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 3;
@@ -560,7 +560,7 @@ pub mod aidl {
              pub use super::r#IRadioConfig as _7_android_8_hardware_5_radio_6_config_12_IRadioConfig;
             }
           }
-                    pub mod IRadioConfigIndication {
+          pub mod IRadioConfigIndication {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #![allow(non_upper_case_globals)]
@@ -643,7 +643,7 @@ pub mod aidl {
               }
             }
             pub mod transactions {
-              pub const r#simSlotsStatusChanged: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION;
+              pub const r#simSlotsStatusChanged: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 0;
               pub const r#getInterfaceVersion: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 16777214;
               pub const r#getInterfaceHash: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 16777213;
             }
@@ -806,7 +806,7 @@ pub mod aidl {
              pub use super::r#IRadioConfigIndication as _7_android_8_hardware_5_radio_6_config_22_IRadioConfigIndication;
             }
           }
-                    pub mod IRadioConfigResponse {
+          pub mod IRadioConfigResponse {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #![allow(non_upper_case_globals)]
@@ -943,7 +943,7 @@ pub mod aidl {
               }
             }
             pub mod transactions {
-              pub const r#getHalDeviceCapabilitiesResponse: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION;
+              pub const r#getHalDeviceCapabilitiesResponse: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 0;
               pub const r#getNumOfLiveModemsResponse: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 1;
               pub const r#getPhoneCapabilityResponse: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 2;
               pub const r#getSimSlotsStatusResponse: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 3;
@@ -1316,7 +1316,7 @@ pub mod aidl {
              pub use super::r#IRadioConfigResponse as _7_android_8_hardware_5_radio_6_config_20_IRadioConfigResponse;
             }
           }
-                    pub mod PhoneCapability {
+          pub mod PhoneCapability {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #[derive(Debug)]
@@ -1366,7 +1366,7 @@ pub mod aidl {
              pub use super::r#PhoneCapability as _7_android_8_hardware_5_radio_6_config_15_PhoneCapability;
             }
           }
-                    pub mod SimPortInfo {
+          pub mod SimPortInfo {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #[derive(Clone)]
@@ -1412,7 +1412,7 @@ pub mod aidl {
              pub use super::r#SimPortInfo as _7_android_8_hardware_5_radio_6_config_11_SimPortInfo;
             }
           }
-                    pub mod SimSlotStatus {
+          pub mod SimSlotStatus {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #[derive(Clone)]
@@ -1463,7 +1463,7 @@ pub mod aidl {
              pub use super::r#SimSlotStatus as _7_android_8_hardware_5_radio_6_config_13_SimSlotStatus;
             }
           }
-                    pub mod SlotPortMapping {
+          pub mod SlotPortMapping {
             #![forbid(unsafe_code)]
             #![rustfmt::skip]
             #[derive(Debug)]
@@ -1504,18 +1504,18 @@ pub mod aidl {
              pub use super::r#SlotPortMapping as _7_android_8_hardware_5_radio_6_config_15_SlotPortMapping;
             }
           }
-                }
-            }
         }
+      }
     }
+  }
 }
 pub mod mangled {
-    pub use super::aidl::android::hardware::radio::config::IRadioConfig::mangled::*;
-    pub use super::aidl::android::hardware::radio::config::IRadioConfigIndication::mangled::*;
-    pub use super::aidl::android::hardware::radio::config::IRadioConfigResponse::mangled::*;
-    pub use super::aidl::android::hardware::radio::config::PhoneCapability::mangled::*;
-    pub use super::aidl::android::hardware::radio::config::SimPortInfo::mangled::*;
-    pub use super::aidl::android::hardware::radio::config::SimSlotStatus::mangled::*;
-    pub use super::aidl::android::hardware::radio::config::SlotPortMapping::mangled::*;
-    pub(crate) use android_hardware_radio::mangled::*;
+  pub use super::aidl::android::hardware::radio::config::IRadioConfig::mangled::*;
+  pub use super::aidl::android::hardware::radio::config::IRadioConfigIndication::mangled::*;
+  pub use super::aidl::android::hardware::radio::config::IRadioConfigResponse::mangled::*;
+  pub use super::aidl::android::hardware::radio::config::PhoneCapability::mangled::*;
+  pub use super::aidl::android::hardware::radio::config::SimPortInfo::mangled::*;
+  pub use super::aidl::android::hardware::radio::config::SimSlotStatus::mangled::*;
+  pub use super::aidl::android::hardware::radio::config::SlotPortMapping::mangled::*;
+  pub(crate) use android_hardware_radio::mangled::*;
 }
