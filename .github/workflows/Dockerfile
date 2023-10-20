@@ -1,10 +1,10 @@
-FROM ubuntu:22.10
+FROM ubuntu:23.10
 
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Taking into account layer structure, everything should be done within one layer.
 RUN apt-get update && apt-get upgrade -y && \
-    apt-get install -y clang-15 clang-tidy-15 git clang llvm make wget sudo rsync lld curl
+    apt-get install -y clang-17 clang-tidy-17 git clang llvm make wget sudo rsync lld curl
 
 ENV USER_HOME /github/home
 
